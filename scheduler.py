@@ -92,8 +92,6 @@ def job():
 # # Schedule the job to run every 4 hours
 schedule.every(4).hours.do(job)
 
-job()
-
 # Run the scheduler
 while True:
     schedule.run_pending()

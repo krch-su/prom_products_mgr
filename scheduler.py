@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 import schedule
 import requests
@@ -22,7 +23,7 @@ def prepare_file(file_path):
 
     with open('offer_ids.txt', 'r') as f:
         identifiers = f.read().splitlines()
-    print(identifiers)
+
     for offer in offers.iterchildren():
         # if (
         #         offer.get('available') == "false"
@@ -72,9 +73,9 @@ def import_file(api_token, file_path):
     # Check the response
     if response.status_code == 200:
         result = response.json()
-        print("Import process ID:", result["id"])
+        logging.info("Import process ID:", result["id"])
     else:
-        print("Error:", response.json())
+        response.raise_for_status()
 
 
 def job():
@@ -84,9 +85,12 @@ def job():
 
     # Replace 'path/to/your/file.xml' with the actual path to your XML file
     file_path = "result.xml"
-    prepare_file(file_path)
-    # Call the function to import the file
-    import_file(api_token, file_path)
+    try:
+        prepare_file(file_path)
+        # Call the function to import the file
+        import_file(api_token, file_path)
+    except Exception as ex:
+        logging.exception(ex)
 
 
 # # Schedule the job to run every 4 hours
@@ -94,6 +98,7 @@ schedule.every(4).hours.do(job)
 
 # Run the scheduler
 while True:
+    logging.info('Scheduler started')
     schedule.run_pending()
     time.sleep(1)
 

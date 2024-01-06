@@ -16,14 +16,15 @@ class XMLHandler(SimpleHTTPRequestHandler):
         # Specify the path to your dynamically generated XML file
         xml_file_path = 'result.xml'
 
-        # Set the content type to XML
-        self.send_response(200)
-        self.send_header('Content-type', 'application/xml')
-        self.end_headers()
+        if self.path == '/feed.xml':
+            # Set the content type to XML
+            self.send_response(200)
+            self.send_header('Content-type', 'application/xml')
+            self.end_headers()
 
-        # Open and send the content of the XML file
-        with open(xml_file_path, 'rb') as f:
-            self.wfile.write(f.read())
+            # Open and send the content of the XML file
+            with open(xml_file_path, 'rb') as f:
+                self.wfile.write(f.read())
 
 
 def prepare_file(file_path):

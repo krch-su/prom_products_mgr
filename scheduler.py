@@ -59,7 +59,7 @@ def get_lugi_xml():
 
 def get_db2b_xml():
     # Завантаження XML файлу за посиланням
-    url = "https://dropship-b2b.com.ua/storage/upload/000039030/price_uk.xml"
+    url = "https://dropship-b2b.com.ua/api/yml/refresh/DPYV8WvmjyOESWuX2hIIvDwLLvCiIRVl5IhPZTdrAXuzCwsy"
 
     # Download XML content from the URL
     response = requests.get(url)

@@ -169,7 +169,7 @@ def job():
 
 def run_server():
     # Start the HTTP server
-    host = '37.233.102.20/'
+    host = '37.233.102.20'
     port = 8080
     server_address = (host, port)
     httpd = TCPServer(server_address, XMLHandler)

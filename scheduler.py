@@ -188,7 +188,7 @@ def run_server():
 if __name__ == '__main__':
     job()
     # Schedule the job to run every hour
-    schedule.every().second.do(job)
+    schedule.every().hour.do(job)
 
     # Start the HTTP server in a separate thread
     server_thread = threading.Thread(target=run_server)

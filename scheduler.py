@@ -91,20 +91,16 @@ def prepare_file(file_path):
     lugi_xml = get_lugi_xml()
     db2b_xml = get_db2b_xml()
 
-    # offers = lugi_xml.shop.categories
-    # offers = lugi_xml.shop.offers
-
-    for category in db2b_xml.shop.categories:
-        lugi_xml.shop.categories.append(category)
-
-    for offer in db2b_xml.shop.offers:
-        lugi_xml.shop.offers.append(offer)
+    # fixme: temp
+    # for category in db2b_xml.shop.categories:
+    #     lugi_xml.shop.categories.append(category)
+    #
+    # for offer in db2b_xml.shop.offers:
+    #     lugi_xml.shop.offers.append(offer)
 
     with open(file_path, 'w') as f:
-        f.write(etree.tostring(lugi_xml).decode('ascii'))
+        f.write(etree.tostring(db2b_xml).decode('ascii'))
 
-    # with open("offer_ids.txt", 'w') as f:
-    #     f.write('\n'.join(identifiers))
 
 
 # prepare_file('result.xml')

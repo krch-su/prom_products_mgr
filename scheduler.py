@@ -88,7 +88,7 @@ def get_db2b_xml():
 
 
 def prepare_file(file_path):
-    lugi_xml = get_lugi_xml()
+    # lugi_xml = get_lugi_xml()
     db2b_xml = get_db2b_xml()
 
     # fixme: temp

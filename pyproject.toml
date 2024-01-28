@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "trade-harbor"
+version = "0.1.0"
+description = "TradeHarbor is a comprehensive management panel designed to handle offers/products from multiple dropshipping suppliers. It allows you to create unique content (product titles, product descriptions) using ChatGPT, manage product groups, and handle keyword management. With the potential to evolve into a fully functional CRM system, TradeHarbor is built using Django, Celery, and lxml."
+authors = ["krch-sudo <krv93200@proton.me>"]
+license = "MIT"
+readme = "README.MD"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+beautifulsoup4 = "4.12.2"
+certifi = "2023.11.17"
+charset-normalizer = "3.3.2"
+et-xmlfile = "1.1.0"
+idna = "3.6"
+lxml = "5.0.0"
+numpy = "1.26.2"
+openpyxl = "3.1.2"
+pandas = "2.1.4"
+python-dateutil = "2.8.2"
+pytz = "2023.3.post1"
+requests = "2.31.0"
+schedule = "1.2.1"
+six = "1.16.0"
+soupsieve = "2.5"
+tzdata = "2023.3"
+urllib3 = "2.1.0"
+django = "^5.0.1"
+django-admin-rangefilter = "^0.12.0"
+django-treebeard = "^4.7"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

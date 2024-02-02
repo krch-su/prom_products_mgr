@@ -21,4 +21,4 @@ def get(
     value = os.getenv(key)
     if value is None and default is not_provided:
         raise ConfigurationOptionNotProvided(key)
-    return coerce(key)
+    return coerce(value) if value else default

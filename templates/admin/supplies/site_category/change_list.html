@@ -1,0 +1,25 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+    <li>
+<!--        <a href="{% url 'admin:supplies_sitecategory_import_xml' %}" class="addlink">-->
+<!--            Import XML-->
+<!--        </a>-->
+        <form method="post" action="{% url 'admin:supplies_sitecategory_import_xml' %}" enctype="multipart/form-data" id="importForm">
+            {% csrf_token %}
+            <button type="button" class="pretty-button" onclick="selectFile()">Import XML</button>
+            <input type="file" name="file" id="id_file" style="display: none;" onchange="submitForm()">
+        </form>
+    </li>
+
+    <script>
+        function selectFile() {
+            document.getElementById('id_file').click();
+        }
+
+        function submitForm() {
+            document.getElementById('importForm').submit();
+        }
+    </script>
+    {{ block.super }}
+{% endblock %}

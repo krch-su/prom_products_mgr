@@ -1,11 +1,18 @@
+import xml.etree.ElementTree as ET
+
+from django import forms
 from django.contrib import admin
 from django.contrib.admin import SimpleListFilter
-from django.db.models import Func, BooleanField, IntegerField, F
+from django.contrib.admin.widgets import FilteredSelectMultiple
+from django.db.models import Func, IntegerField, F
+from django.http import HttpResponseRedirect
+from django.urls import path, reverse
+from django.utils.html import format_html
 from rangefilter.filters import NumericRangeFilterBuilder
-from treebeard.admin import TreeAdmin
 
 from . import models
-from .models import Offer
+from .models import Offer, SupplierCategory
+from .tasks import translate, generate_offer_name, generate_offer_description
 
 
 class HasImageFilter(SimpleListFilter):
@@ -40,13 +47,44 @@ class HasImageFilter(SimpleListFilter):
 
 @admin.register(models.Offer)
 class OfferAdmin(admin.ModelAdmin):
-    list_display = ('vendor_code', 'active', 'display_name', 'price', 'main_image_tag')
+    list_display = (
+        'vendor_code',
+        'active',
+        'display_name',
+        'content_hints',
+        'display_supplier',
+        'display_category',
+        'price',
+        'link_to_supplier_offer',
+        'main_image_tag',
+    )
+
+    search_fields = ['name', 'supplier_offer__category__site_category__name']
+
     list_filter = [
         "supplier_offer__supplier",
-        "active"
+        "active",
+        "supplier_offer__category__site_category"
     ]
 
-    actions = ['activate', 'deactivate']
+    actions = [
+        'activate',
+        'deactivate',
+        'generate_title',
+        'generate_description',
+        'translate'
+    ]
+
+    def content_hints(self, obj):
+        return format_html("""
+            <a href="#"><span class="hint  hint--bottom  hint--info  hint--large" data-hint="{name_ua}">name_ua</span></a>
+            <a href="#"><span class="hint  hint--bottom  hint--info  hint--large" data-hint="{description_ua}">description_ua</span></a>
+            <a href="#"><span class="hint  hint--bottom  hint--info  hint--large" data-hint="{description}">description</span></a>
+        """, name_ua=obj.name_ua, description_ua=obj.description_ua, description=obj.description)
+
+    def link_to_supplier_offer(self, obj):
+        link = reverse("admin:supplies_supplieroffer_change", args=[obj.supplier_offer._id])
+        return format_html('<a href="{}">#{}</a>', link, obj.supplier_offer.vendor_code)
 
     @admin.action(description="Deactivate offers")
     def deactivate(self, request, queryset):
@@ -56,15 +94,45 @@ class OfferAdmin(admin.ModelAdmin):
     def activate(self, request, queryset):
         queryset.update(active=True)
 
+    @admin.action(description='Generate title')
+    def generate_title(self, request, queryset):
+        for offer in queryset:
+            generate_offer_name.delay(offer.pk)
+
+    @admin.action(description='Generate description')
+    def generate_description(self, request, queryset):
+        for offer in queryset:
+            generate_offer_description.delay(offer.pk)
+
+    @admin.action(description="Translate")
+    def translate(self, request, queryset):
+        translate.delay(list(queryset.values_list('pk', flat=True)))
+
+    class Media:
+        css = {
+            'all': ('hint.min.css',)
+        }
+
 
 @admin.register(models.SupplierOffer)
 class SupplierOfferAdmin(admin.ModelAdmin):
-    list_display = ('vendor_code', 'name', 'price', 'main_image_tag')
+    list_display = (
+        'vendor_code',
+        'name',
+        'category_display',
+        'site_category',
+        'price',
+        'main_image_tag'
+    )
+    search_fields = ['name', 'category__name']
+
     list_filter = [
         "available",
         "supplier",
         ("price", NumericRangeFilterBuilder()),
         HasImageFilter,
+        "category",
+
     ]
 
     actions = ['publish']
@@ -80,6 +148,93 @@ class SupplierAdmin(admin.ModelAdmin):
     list_display = ('name', 'active')
 
 
-@admin.register(models.Category)
-class CategoryAdmin(TreeAdmin):
-    pass
+class CategoryForm(forms.ModelForm):
+    supplier_categories = forms.ModelMultipleChoiceField(
+        queryset=SupplierCategory.objects.all(),
+        widget=FilteredSelectMultiple("SupplierCategory", is_stacked=False),
+        required=False,
+    )
+
+    def get_initial_for_field(self, field, field_name):
+        if field_name == 'supplier_categories':
+            return self.instance.supplier_categories.all()
+        else:
+            return super().get_initial_for_field(field, field_name)
+
+    def save(self, commit=True):
+        instance = super(CategoryForm, self).save(commit=False)
+        supplier_categories = self.cleaned_data.get('supplier_categories', [])
+        instance.supplier_categories.set(supplier_categories)
+
+        if commit:
+            instance.save()
+
+        return instance
+
+    class Meta:
+        model = models.SiteCategory
+        fields = ['name', 'parent_category', 'supplier_categories']
+
+
+class CategoriesImportForm(forms.Form):
+    file = forms.FileField()
+
+
+@admin.register(models.SiteCategory)
+class CategoryAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/supplies/site_category/change_list.html'
+    form = CategoryForm
+    search_fields = ['name']
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('import-xml/', self.import_xml, name='supplies_sitecategory_import_xml'),
+        ]
+        return custom_urls + urls
+
+    def import_xml(self, request):
+        if request.method == 'POST':
+            form = CategoriesImportForm(request.POST, request.FILES)
+            if form.is_valid():
+                file = form.cleaned_data['file']
+
+                # Use csv_file to read and process the data
+                with file.open() as file:
+                    root = ET.fromstring(file.read())
+                    categories = []
+                    for category_element in root.findall(".//categories/category"):
+                        categories.append(models.SiteCategory(
+                            id=category_element.get('id'),
+                            parent_category_id=category_element.get('parentId'),
+                            name=category_element.text
+                        ))
+                    print(categories)
+                    models.SiteCategory.objects.bulk_create(
+                        categories, update_conflicts=True, update_fields=[
+                            'name',
+                            'parent_category_id'
+                        ], unique_fields=['id']
+                    )
+
+                self.message_user(request, 'Data imported from XML file')
+                return HttpResponseRedirect(reverse('admin:supplies_sitecategory_changelist'))
+        # else:
+        #     form = CategoriesImportForm()
+        #
+        # context = dict(
+        #     self.admin_site.each_context(request),
+        #     form=form,
+        # )
+        #
+        # return self.render_change_list(request, context)
+
+
+@admin.register(models.SupplierCategory)
+class SupplierCategoryAdmin(admin.ModelAdmin):
+    list_display = [
+        'name',
+        'supplier',
+        'parent_category',
+        'site_category'
+    ]

@@ -19,7 +19,7 @@ class SupplierOffer(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     supplier = models.ForeignKey(Supplier, on_delete=models.DO_NOTHING)
 
-    id = models.BigIntegerField()
+    id = models.CharField(max_length=255)
     available = models.BooleanField(default=False)
     group_id = models.BigIntegerField(null=True)
     url = models.URLField(null=True)
@@ -31,7 +31,7 @@ class SupplierOffer(models.Model):
     minimum_order_quantity = models.IntegerField(null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     currencyId = models.CharField(max_length=3)
-    categoryId = models.CharField(max_length=20)
+    # categoryId = models.CharField(max_length=20)
     pickup = models.BooleanField(null=True)
     delivery = models.BooleanField(null=True)
     name = models.CharField(max_length=255)
@@ -54,6 +54,12 @@ class SupplierOffer(models.Model):
     gtin = models.CharField(max_length=64, null=True)
     mpn = models.CharField(max_length=64, null=True)
 
+    category = models.ForeignKey(
+        'SupplierCategory',
+        on_delete=models.DO_NOTHING,
+        null=True
+    )
+
     @property
     def main_image_tag(self):
         if len(self.pictures):
@@ -64,6 +70,21 @@ class SupplierOffer(models.Model):
     @property
     def vendor_code(self):
         return self.vendorCode or self.barcode or self.article
+
+    @property
+    def site_category(self):
+        return (
+            self.category.site_category.name
+            if self.category and self.category.site_category
+            else ''
+        )
+
+    @property
+    def category_display(self):
+        return self.category.name if self.category else ''
+
+    def __str__(self):
+        return self.vendor_code
 
     class Meta:
         verbose_name = 'Supplier Offer'
@@ -77,7 +98,7 @@ class Offer(models.Model):
         on_delete=models.DO_NOTHING,
         related_name='offer'
     )
-    active = models.BooleanField(default=True)
+    active = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -91,6 +112,10 @@ class Offer(models.Model):
     keywords_ua = models.JSONField(null=True)
     params = models.TextField(null=True)
     pictures = models.JSONField(null=True)
+    category = models.ForeignKey(
+        'SiteCategory', on_delete=models.DO_NOTHING,
+        null=True
+    )
 
     @property
     def display_name(self):
@@ -134,23 +159,60 @@ class Offer(models.Model):
     def price(self):
         return self.supplier_offer.price
 
+    @property
+    def display_category(self):
+        return self.supplier_offer.site_category
+
+    @property
+    def display_supplier(self):
+        return self.supplier_offer.supplier
+
     class Meta:
         verbose_name = 'Offer'
         verbose_name_plural = 'Offers'
 
 
-class Category(MP_Node):
+class SiteCategory(models.Model):
     id = models.BigIntegerField(primary_key=True)
     parent_category = models.ForeignKey(
         'self',
         on_delete=models.DO_NOTHING,
-        null=True
+        null=True,
+        blank=True
     )
     name = models.CharField(max_length=512)
 
     class Meta:
-        verbose_name = 'Category'
-        verbose_name_plural = 'Categories'
+        verbose_name = 'Site Category'
+        verbose_name_plural = 'Site Categories'
 
     def __str__(self):
         return self.name
+
+
+class SupplierCategory(models.Model):
+    id = models.BigIntegerField(primary_key=True)
+    parent_category = models.ForeignKey(
+        'self',
+        on_delete=models.DO_NOTHING,
+        null=True,
+    )
+    supplier = models.ForeignKey(
+        Supplier,
+        on_delete=models.CASCADE
+    )
+
+    site_category = models.ForeignKey(
+        SiteCategory,
+        null=True,
+        on_delete=models.DO_NOTHING,
+        related_name='supplier_categories'
+    )
+    name = models.CharField(max_length=512)
+
+    class Meta:
+        verbose_name = 'Supplier Category'
+        verbose_name_plural = 'Supplier Categories'
+
+    def __str__(self):
+        return f'{self.supplier} | {self.name}'

@@ -32,6 +32,8 @@ openai = "^1.10.0"
 langid = "^1.1.6"
 deepl-cli = "^0.6.0"
 celery = {extras = ["redis"], version = "^5.3.6"}
+playwright-recaptcha = "^0.4.2"
+playwright-stealth = "^1.0.6"
 
 
 [tool.poetry.group.dev.dependencies]

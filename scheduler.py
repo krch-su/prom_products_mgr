@@ -29,7 +29,7 @@ class XMLHandler(SimpleHTTPRequestHandler):
 
 def get_lugi_xml():
     # Завантаження XML файлу за посиланням
-    lugi_url = "https://lugi.shop/products_feed.xml?hash_tag=7a3af7817db1ca8c29213e5dff855207&sales_notes=&product_ids=&label_ids=&exclude_fields=&html_description=0&yandex_cpa=&process_presence_sure=&languages=uk%2Cru&group_ids=&extra_fields=quantityInStock%2Ckeywords"
+    lugi_url = "https://lugi.shop/products_feed.xml?hash_tag=bbea89f6d4a4a0fb86afb1695fbcda61&sales_notes=&product_ids=&label_ids=&exclude_fields=&html_description=0&yandex_cpa=&process_presence_sure=&languages=uk%2Cru&extra_fields=quantityInStock%2Ckeywords&group_ids="
 
     # Download XML content from the URL
     response = requests.get(lugi_url)
@@ -88,18 +88,18 @@ def get_db2b_xml():
 
 
 def prepare_file(file_path):
-    # lugi_xml = get_lugi_xml()
+    lugi_xml = get_lugi_xml()
     db2b_xml = get_db2b_xml()
 
     # fixme: temp
-    # for category in db2b_xml.shop.categories:
-    #     lugi_xml.shop.categories.append(category)
-    #
-    # for offer in db2b_xml.shop.offers:
-    #     lugi_xml.shop.offers.append(offer)
+    for category in db2b_xml.shop.categories:
+        lugi_xml.shop.categories.append(category)
+
+    for offer in db2b_xml.shop.offers:
+        lugi_xml.shop.offers.append(offer)
 
     with open(file_path, 'w') as f:
-        f.write(etree.tostring(db2b_xml).decode('ascii'))
+        f.write(etree.tostring(lugi_xml).decode('ascii'))
 
 
 

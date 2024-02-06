@@ -1,3 +1,4 @@
+import json
 import xml.etree.ElementTree as ET
 
 from django import forms
@@ -5,7 +6,7 @@ from django.contrib import admin
 from django.contrib.admin import SimpleListFilter
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.db.models import Func, IntegerField, F
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import path, reverse
 from django.utils.html import format_html
 from rangefilter.filters import NumericRangeFilterBuilder
@@ -45,8 +46,37 @@ class HasImageFilter(SimpleListFilter):
             return queryset
 
 
+class JsonSelectMultiple(forms.SelectMultiple):
+
+    def format_value(self, value):
+        value = (json.loads(value) if value else []) or []
+        self.choices = zip(value, value)  # hack to get choices displayed
+        return value
+
+    def value_from_datadict(self, data, files, name):
+        return json.dumps(data.getlist(name))
+
+
+class OfferForm(forms.ModelForm):
+    _json_selects = ['keywords', 'keywords_ua']
+
+    class Meta:
+        model = models.Offer
+        fields = '__all__'
+        widgets = {
+            'keywords': JsonSelectMultiple(attrs={'class': 'tag-autocomplete'}),
+            'keywords_ua': JsonSelectMultiple(attrs={'class': 'tag-autocomplete'}),
+        }
+        required = (
+            'supplier_offer',
+            'active',
+        )
+
+
 @admin.register(models.Offer)
 class OfferAdmin(admin.ModelAdmin):
+    form = OfferForm
+    change_form_template = 'admin/supplies/category/change_form.html'
     list_display = (
         'vendor_code',
         'active',
@@ -107,6 +137,20 @@ class OfferAdmin(admin.ModelAdmin):
     @admin.action(description="Translate")
     def translate(self, request, queryset):
         translate.delay(list(queryset.values_list('pk', flat=True)))
+
+    def autocomplete_keyphrase(self, request):
+        term = request.GET.get('term')
+        print(term)
+        suggestions = [{'id': text, 'text': text} for text in ['sug1', 'sug2']]
+        # suggestions = MyModel.objects.filter(tags__contains=term).values_list('tags', flat=True)
+        return JsonResponse(list(suggestions), safe=False)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('autocomplete-keyphrase/', self.autocomplete_keyphrase, name='supplies_offer_autocomplete_keyphrase'),
+        ]
+        return custom_urls + urls
 
     class Media:
         css = {

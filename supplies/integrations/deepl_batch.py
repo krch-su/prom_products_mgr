@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 # import asyncio
 from typing import TYPE_CHECKING, Any, ClassVar, List
 from urllib.parse import quote

@@ -102,19 +102,19 @@ class Offer(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    group_id = models.BigIntegerField(null=True)
-    url = models.URLField(null=True)
-    name = models.CharField(max_length=255, null=True)
-    name_ua = models.CharField(max_length=255, null=True)
-    description = models.TextField(null=True)
-    description_ua = models.TextField(null=True)
-    keywords = models.JSONField(null=True)
-    keywords_ua = models.JSONField(null=True)
-    params = models.TextField(null=True)
-    pictures = models.JSONField(null=True)
+    group_id = models.BigIntegerField(null=True, blank=True)
+    url = models.URLField(null=True, blank=True)
+    name = models.CharField(max_length=255, null=True, blank=True)
+    name_ua = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    description_ua = models.TextField(null=True, blank=True)
+    keywords = models.JSONField(null=True, blank=True)
+    keywords_ua = models.JSONField(null=True, blank=True)
+    params = models.TextField(null=True, blank=True)
+    pictures = models.JSONField(null=True, blank=True)
     category = models.ForeignKey(
         'SiteCategory', on_delete=models.DO_NOTHING,
-        null=True
+        null=True, blank=True
     )
 
     @property

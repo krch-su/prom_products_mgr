@@ -1,5 +1,4 @@
-from django.http import HttpResponse, HttpResponseNotFound
-
+from django.http import HttpResponse, HttpResponseNotFound, JsonResponse
 
 from django.views.generic import View
 
@@ -13,3 +12,4 @@ class XMLFeedView(View):
         return HttpResponse(generate_offers_xml(
             Offer.objects.filter(active=True).select_related('supplier_offer')
         ), content_type='application/xml')
+

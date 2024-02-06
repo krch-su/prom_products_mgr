@@ -1,0 +1,33 @@
+{% extends "admin/change_form.html" %}
+
+{% block admin_change_form_document_ready %}
+    {{ block.super }}
+<script
+  src="https://code.jquery.com/jquery-3.7.1.min.js"
+  integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+  crossorigin="anonymous"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!--    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>-->
+<!--    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>-->
+    <script>
+        $(document).ready(function() {
+            $(".tag-autocomplete").select2({
+                multiple: true,
+                width: '100%',
+                tags: true,
+                tokenSeparators: [',', ', '],
+                ajax: {
+                    url: '{% url 'admin:supplies_offer_autocomplete_keyphrase' %}',
+                    dataType: 'json',
+                    processResults: function (data) {
+                      console.log(data)
+                      return {
+                        results: data
+                      }
+                    }
+                }
+            })
+        });
+    </script>
+{% endblock %}

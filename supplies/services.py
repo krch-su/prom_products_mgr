@@ -1,15 +1,11 @@
 import asyncio
 import json
 import xml.etree.ElementTree as ET
-
-import deepl
-import langid
 import requests
 from deepl import DeepLCLI
 from django.conf import settings
 from django.core.serializers import serialize
 from django.db.models import QuerySet
-from lxml import etree
 from openai import OpenAI
 
 from supplies.models import Offer, SupplierOffer, Supplier, SupplierCategory
@@ -42,7 +38,7 @@ def generate_offers_xml(offer_queryset: QuerySet[Offer]):
     ET.SubElement(shop, "url").text = "111"
 
     currencies = ET.SubElement(shop, "currencies")
-    currency_element = ET.SubElement(currencies, "currency", id='UAH', rate='1')
+    ET.SubElement(currencies, "currency", id='UAH', rate='1')
 
     # Add currency elements if needed
 
@@ -91,19 +87,6 @@ def generate_offers_xml(offer_queryset: QuerySet[Offer]):
     return xml_data
 
 
-# def build_hierarchy(elements, parent_id=None):
-#     result = []
-#
-#     for element in elements:
-#         if element['data']['parent_category_id'] == parent_id:
-#             children = build_hierarchy(elements, parent_id=element['data']['id'])
-#             if children:
-#                 element['children'] = children
-#             result.append(element)
-#
-#     return result
-
-
 def save_offers(xml_data, supplier):
     # Parse XML
     root = ET.fromstring(xml_data)
@@ -115,7 +98,6 @@ def save_offers(xml_data, supplier):
             parent_category_id=category_element.get('parentId'),
             name=category_element.text
         ))
-    print(categories)
     SupplierCategory.objects.bulk_create(
         categories, update_conflicts=True, update_fields=[
             'name',
@@ -158,7 +140,6 @@ def save_offers(xml_data, supplier):
 
 
 def load_offers(supplier: Supplier):
-    # url = "https://dropship-b2b.com.ua/storage/upload/000039030/price_uk.xml"
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
     # Download XML content from the URL

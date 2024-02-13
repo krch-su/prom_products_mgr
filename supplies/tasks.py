@@ -31,3 +31,10 @@ def generate_offer_name(offer_id):
 @shared_task()
 def generate_offer_description(offer_id):
     get_content_manager().generate_description(Offer.objects.get(pk=offer_id))
+
+
+@shared_task()
+def update_feeds():
+    pass  # todo
+
+

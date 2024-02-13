@@ -105,7 +105,6 @@ def save_offers(xml_data, supplier):
         ], unique_fields=['id']
     )
 
-    # return
     # Iterate through offer elements
     for offer_element in root.findall(".//offers/offer"):
         offer_data = {
@@ -150,17 +149,6 @@ def load_offers(supplier: Supplier):
         response.raise_for_status()
 
     return save_offers(response.content, supplier=supplier)
-
-
-class SyncDeepLCLI(DeepLCLI):
-    def translate(self, script: str) -> str:
-        script = self._DeepLCLI__sanitize_script(script)
-
-        # run in the current thread
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        return loop.run_until_complete(self._DeepLCLI__translate(script))
-
 
 class ContentManager:
     def __init__(self, client: OpenAI):

@@ -186,9 +186,6 @@ class ContentManager:
         self._client = client
 
     def generate_title(self, offer: Offer):
-        print(offer.name)
-        print(offer.description)
-        print(offer.params)
         soffer = offer.supplier_offer
         comp = self._client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -205,26 +202,7 @@ class ContentManager:
                 {"role": "user", "content": f'ПИШИ НА РУССКОМ ЯЗЫКЕ'}
             ]
         )
-        # print(comp.choices)
         text = comp.choices[0].message.content
-        # comp1 = self._client.chat.completions.create(
-        #     model="gpt-3.5-turbo",
-        #     max_tokens=110,
-        #     temperature=0.3,
-        #     timeout=10,
-        #     messages=[
-        #         {"role": "user",
-        #          "content": """
-        #          Add 1-2 most relevant product synonyms(keywords) in the end of title
-        #          """},
-        #         {"role": "user", "content": text},
-        #     ]
-        # )
-        # print(comp1.choices[0].message.content)
-        # print(langid.classify(text))
-        # deepl = SyncDeepLCLI(langid.classify(text)[0], "ru")
-        #
-        # offer.name = deepl.translate(text)
         offer.name = text
         offer.save(update_fields=['name'])
 

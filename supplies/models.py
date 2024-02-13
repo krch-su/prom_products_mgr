@@ -1,6 +1,5 @@
 from django.db import models
 from django.utils.safestring import mark_safe
-from treebeard.mp_tree import MP_Node
 
 
 class Supplier(models.Model):

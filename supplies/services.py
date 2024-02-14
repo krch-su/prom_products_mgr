@@ -1,8 +1,7 @@
-import asyncio
 import json
 import xml.etree.ElementTree as ET
+
 import requests
-from deepl import DeepLCLI
 from django.conf import settings
 from django.core.serializers import serialize
 from django.db.models import QuerySet

@@ -154,7 +154,7 @@ class OfferAdmin(admin.ModelAdmin):
 
     class Media:
         css = {
-            'all': ('hint.min.css',)
+            'all': ('hint.min.css', 'sticky_toolbar.css')
         }
 
 

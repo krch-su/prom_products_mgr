@@ -34,7 +34,7 @@ class HasImageFilter(SimpleListFilter):
         queryset = queryset.annotate(
             num_pictures=Func(
                 F('pictures'),
-                function='json_array_length',
+                function='jsonb_array_length',
                 output_field=IntegerField()
             )
         )

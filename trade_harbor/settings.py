@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+
+import dj_database_url
+
 from trade_harbor import env
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -71,12 +74,12 @@ WSGI_APPLICATION = 'trade_harbor.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+DATABASES = dict(
+    default=dj_database_url.config(
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+)
 
 
 # Password validation
@@ -137,7 +140,8 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 100000
 CELERY_TIMEZONE = "Europe/Kiev"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = env.get('CELERY_BROKER_URL')
+CELERY_RESULT_BACKEND = env.get('CELERY_RESULT_BACKEND')
 
 OPENAI_CREDENTIALS = {
     'api_key': env.get('OPENAI_API_KEY'),

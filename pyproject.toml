@@ -36,6 +36,8 @@ playwright-recaptcha = "^0.4.2"
 playwright-stealth = "^1.0.6"
 django-tags-input = "^6.0.0"
 django-admin-interface = "^0.28.5"
+psycopg2-binary = "2.9.2"
+dj-database-url = "^2.1.0"
 
 
 [tool.poetry.group.dev.dependencies]

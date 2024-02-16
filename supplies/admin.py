@@ -1,6 +1,7 @@
 import json
 import xml.etree.ElementTree as ET
 
+import requests
 from django import forms
 from django.contrib import admin
 from django.contrib.admin import SimpleListFilter
@@ -154,8 +155,14 @@ class OfferAdmin(admin.ModelAdmin):
 
     def autocomplete_keyphrase(self, request):
         term = request.GET.get('term')
-        print(term)
-        suggestions = [{'id': text, 'text': text} for text in ['sug1', 'sug2']]
+        resp = requests.get('https://suggester-ua-prod.evo.run/search_suggester/suggest_tags.js', params={
+            'term': term
+        })
+        suggestions = []
+        for s in resp.json():
+            suggestions.append({'id': s, 'text': s})
+        # print(term)
+        # suggestions = [{'id': text, 'text': text} for text in ['sug1', 'sug2']]
         # suggestions = MyModel.objects.filter(tags__contains=term).values_list('tags', flat=True)
         return JsonResponse(list(suggestions), safe=False)
 

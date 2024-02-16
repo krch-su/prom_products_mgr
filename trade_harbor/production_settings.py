@@ -20,4 +20,5 @@ sentry_sdk.init(
     profiles_sample_rate=1.0,
 )
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["http://localhost:1337"]
+CSRF_TRUSTED_ORIGINS = ["http://localhost:1337"]

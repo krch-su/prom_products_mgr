@@ -40,6 +40,7 @@ psycopg2-binary = "2.9.2"
 dj-database-url = "^2.1.0"
 sentry-sdk = {extras = ["celery"], version = "^1.40.4"}
 django-celery-beat = {git = "https://github.com/celery/django-celery-beat", rev = "f66796b9c5c9e47d118cb5b41d970f07cce72bbe"}  # fixme: replace with pypi version when it will be released
+gunicorn = "^21.2.0"
 
 
 [tool.poetry.group.dev.dependencies]

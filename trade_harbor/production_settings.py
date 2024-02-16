@@ -21,4 +21,3 @@ sentry_sdk.init(
 )
 
 ALLOWED_HOSTS = ["*"]
-CSRF_TRUSTED_ORIGINS = ["*"]

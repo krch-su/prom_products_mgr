@@ -20,7 +20,7 @@ sentry_sdk.init(
     profiles_sample_rate=1.0,
 )
 
-CSRF_TRUSTED_ORIGINS = ["http://localhost:1337", "https://localhost:1337:"]
+CSRF_TRUSTED_ORIGINS = env.get('CSRF_TRUSTED_ORIGINS', lambda x: x.split(','))
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False

@@ -104,6 +104,8 @@ def save_offers(xml_data, supplier):
         ], unique_fields=['id']
     )
 
+    categories = SupplierCategory.objects.filter(supplier=supplier).values_list('pk', flat=True)
+
     # Iterate through offer elements
     for offer_element in root.findall(".//offers/offer"):
         offer_data = {
@@ -123,10 +125,12 @@ def save_offers(xml_data, supplier):
             elif field_name == 'picture':
                 offer_data['pictures'].append(field_value)
             elif field_name == 'categoryId':
-                offer_data['category_id'] = int(field_value)
+                category_id = int(field_value)
+                if category_id in categories:
+                    offer_data['category_id'] = category_id
             elif field_value is not None:
                 if field_name in ['pickup', 'delivery']:
-                    field_value = field_value == 'true'
+                    field_value = field_value.lower() == 'true'
                 offer_data[field_name] = field_value
 
         # Create or update Offer and SupplierOffer models

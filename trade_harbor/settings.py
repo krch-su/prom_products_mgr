@@ -30,11 +30,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_celery_beat',
+    'rangefilter',
 
     'supplies',
-
-    'rangefilter',
-    'treebeard'
 ]
 
 X_FRAME_OPTIONS = "SAMEORIGIN"

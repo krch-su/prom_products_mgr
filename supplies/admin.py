@@ -13,7 +13,7 @@ from rangefilter.filters import NumericRangeFilterBuilder
 
 from . import models
 from .models import Offer, SupplierCategory
-from .tasks import translate, generate_offer_name, generate_offer_description
+from .tasks import translate, generate_offer_name, generate_offer_description, generate_content_and_translate
 
 
 class HasImageFilter(SimpleListFilter):
@@ -80,6 +80,7 @@ class OfferAdmin(admin.ModelAdmin):
     list_display = (
         'vendor_code',
         'active',
+        'display_available',
         'display_name',
         'content_hints',
         'display_supplier',
@@ -94,16 +95,25 @@ class OfferAdmin(admin.ModelAdmin):
     list_filter = [
         "supplier_offer__supplier",
         "active",
-        "supplier_offer__category__site_category"
+        "supplier_offer__category__site_category",
+        "supplier_offer__available",
     ]
 
     actions = [
         'activate',
         'deactivate',
+        'generate_content_and_translate',
         'generate_title',
         'generate_description',
         'translate'
     ]
+
+    def display_available(self, obj):
+        if obj.available:
+            icon = '<img src="/static/admin/img/icon-yes.svg" alt="True">'
+        else:
+            icon = '<img src="/static/admin/img/icon-no.svg" alt="False">'
+        return format_html(icon)
 
     def content_hints(self, obj):
         return format_html("""
@@ -123,6 +133,10 @@ class OfferAdmin(admin.ModelAdmin):
     @admin.action(description="Activate offers")
     def activate(self, request, queryset):
         queryset.update(active=True)
+
+    @admin.action(description='Generate content and translate')
+    def generate_content_and_translate(self, request, queryset):
+        generate_content_and_translate.delay(list(queryset.values_list('pk', flat=True)))
 
     @admin.action(description='Generate title')
     def generate_title(self, request, queryset):
@@ -156,6 +170,8 @@ class OfferAdmin(admin.ModelAdmin):
         css = {
             'all': ('hint.min.css', 'sticky_toolbar.css')
         }
+
+        js = ('scroll_preserve.js', )
 
 
 @admin.register(models.SupplierOffer)

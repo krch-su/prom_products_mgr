@@ -92,7 +92,7 @@ class SupplierOffer(models.Model):
 
 class Offer(models.Model):
     _id = models.BigAutoField(primary_key=True)
-    supplier_offer = models.OneToOneField(
+    supplier_offer: SupplierOffer = models.OneToOneField(
         SupplierOffer,
         on_delete=models.DO_NOTHING,
         related_name='offer'
@@ -115,6 +115,10 @@ class Offer(models.Model):
         'SiteCategory', on_delete=models.DO_NOTHING,
         null=True, blank=True
     )
+
+    @property
+    def available(self):
+        return self.supplier_offer.available
 
     @property
     def display_name(self):
@@ -175,6 +179,7 @@ class SiteCategory(models.Model):
     id = models.BigIntegerField(primary_key=True)
     parent_category = models.ForeignKey(
         'self',
+        related_name='children',
         on_delete=models.DO_NOTHING,
         null=True,
         blank=True
@@ -193,6 +198,7 @@ class SupplierCategory(models.Model):
     id = models.BigIntegerField(primary_key=True)
     parent_category = models.ForeignKey(
         'self',
+        related_name='children',
         on_delete=models.DO_NOTHING,
         null=True,
     )

@@ -19,3 +19,5 @@ sentry_sdk.init(
     # We recommend adjusting this value in production.
     profiles_sample_rate=1.0,
 )
+
+ALLOWED_HOSTS = ['*']

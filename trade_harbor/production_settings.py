@@ -21,5 +21,7 @@ sentry_sdk.init(
 )
 
 CSRF_TRUSTED_ORIGINS = ["http://localhost:1337"]
-
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
 ALLOWED_HOSTS = ["*"]

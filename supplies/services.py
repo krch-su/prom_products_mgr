@@ -153,6 +153,28 @@ def load_offers(supplier: Supplier):
 
     return save_offers(response.content, supplier=supplier)
 
+
+class Translator:
+    def __init__(self, client: OpenAI):
+        self._client = client
+
+    def __call__(self, s: str) -> str:
+        comp = self._client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            max_tokens=110,
+            # temperature=0.6,
+            timeout=10,
+            messages=[
+                {"role": "user",
+                 "content": """
+                         Переклади цей текст українською мовою
+                         """},
+                {"role": "user", "content": s},
+                {"role": "user", "content": f'ПИШИ УКРАЇНСЬКОЮ МОВОЮ'}
+            ]
+        )
+        return comp.choices[0].message.content
+
 class ContentManager:
     def __init__(self, client: OpenAI):
         self._client = client

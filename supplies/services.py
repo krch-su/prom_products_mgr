@@ -69,6 +69,8 @@ def generate_offers_xml(offer_queryset: QuerySet[Offer]):
             if field == 'params':
                 params_root = ET.fromstring(f'<root>{value}</root>')
                 insert_elements(params_root, offer_element)
+            elif field in ['keywords', 'keywords_ua']:
+                ET.SubElement(offer_element, field).text = ','.join(value)
             elif field == 'pictures':
                 for url in value:
                     ET.SubElement(offer_element, 'picture').text = str(url)
@@ -81,7 +83,12 @@ def generate_offers_xml(offer_queryset: QuerySet[Offer]):
 
         for field in overridden_fields:
             if data[field] not in [None, ""]:
-                ET.SubElement(offer_element, field).text = str(data[field])
+                if field in ['keywords', 'keywords_ua']:
+                    t = ET.SubElement(offer_element, field).text or ''
+                    t = t + ',' if t else ''
+                    ET.SubElement(offer_element, field).text = t + ','.join(data[field])
+                else:
+                    ET.SubElement(offer_element, field).text = str(data[field])
 
     # Convert the ElementTree to a string
     xml_data = ET.tostring(root, encoding="utf-8").decode("utf-8")
@@ -91,6 +98,8 @@ def generate_offers_xml(offer_queryset: QuerySet[Offer]):
 def save_offers(xml_data, supplier):
     # Parse XML
     root = ET.fromstring(xml_data)
+    existing_categories = SupplierCategory.objects.filter(supplier=supplier).values_list('pk', flat=True)
+
     categories = []
     for category_element in root.findall(".//categories/category"):
         categories.append(SupplierCategory(
@@ -99,6 +108,11 @@ def save_offers(xml_data, supplier):
             parent_category_id=category_element.get('parentId'),
             name=category_element.text
         ))
+    categories = filter(  # removing categories with invalid parents
+        lambda x: x.parent_category_id in list(map(lambda c: c.id, categories)) + list(existing_categories),
+        categories
+    )
+
     SupplierCategory.objects.bulk_create(
         categories, update_conflicts=True, update_fields=[
             'name',
@@ -130,6 +144,8 @@ def save_offers(xml_data, supplier):
                 category_id = int(field_value)
                 if category_id in categories:
                     offer_data['category_id'] = category_id
+            elif field_name in ['keywords', 'keywords_ua'] and field_value is not None:
+                offer_data[field_name] = [x.strip() for x in field_value.split(',')]
             elif field_value is not None:
                 if field_name in ['pickup', 'delivery']:
                     field_value = field_value.lower() == 'true'

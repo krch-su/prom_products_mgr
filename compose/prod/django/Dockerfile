@@ -40,8 +40,7 @@ COPY ./compose/prod/django/celery/flower/start.sh /start-flower.sh
 RUN sed -i 's/\r$//g' /start-flower.sh
 RUN chmod +x /start-flower.sh
 
-RUN mkdir -p $APP_HOME/static/vendor
-RUN mkdir -p $APP_HOME/static/project
+RUN mkdir -p $APP_HOME/static
 RUN mkdir -p $APP_HOME/media
 WORKDIR /app
 

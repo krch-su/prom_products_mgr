@@ -120,7 +120,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 
 STATICFILES_DIRS = [
-    BASE_DIR / "static/project/",
+    BASE_DIR / "supplies/static/",
     # "/var/www/static/",
 ]
 

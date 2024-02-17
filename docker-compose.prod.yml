@@ -12,8 +12,7 @@ services:
     # so if we change code on the host, code in the docker container will also be changed
     volumes:
       - .:/app
-      - static_volume:/app/static/vendor
-      - static_custom_volume:/app/static/project
+      - static_volume:/app/static/
     expose:
       - 8000
     # env_file is used to manage the env variables of our project
@@ -69,7 +68,6 @@ services:
       - web
     volumes:
       - static_volume:/app/static
-      - static_custom_volume:/app/static/custom
 
 #  flower:
 #    build:
@@ -95,4 +93,3 @@ volumes:
       device: ${PWD}/postgres_data
       o: bind
   static_volume:
-  static_custom_volume:

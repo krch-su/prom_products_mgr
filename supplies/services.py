@@ -146,7 +146,7 @@ def save_offers(xml_data, supplier):
                     offer_data['category_id'] = category_id
             elif field_name in ['keywords', 'keywords_ua'] and field_value is not None:
                 offer_data[field_name] = [x.strip() for x in field_value.split(',')]
-            elif field_value is not None:
+            elif field_value is not None and field_name in [f.name for f in SupplierOffer._meta.fields]:
                 if field_name in ['pickup', 'delivery']:
                     field_value = field_value.lower() == 'true'
                 offer_data[field_name] = field_value

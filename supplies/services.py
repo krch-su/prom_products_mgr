@@ -1,4 +1,5 @@
 import json
+import logging
 import xml.etree.ElementTree as ET
 
 import requests
@@ -9,6 +10,7 @@ from openai import OpenAI
 
 from supplies.models import Offer, SupplierOffer, Supplier, SupplierCategory
 
+logger = logging.getLogger(__name__)
 
 def insert_elements(source_root, target_root):
     for element in source_root:
@@ -154,7 +156,27 @@ def load_offers(supplier: Supplier):
     return save_offers(response.content, supplier=supplier)
 
 
-class Translator:
+class DeeplTranslator:
+    def __init__(self, api_key: str):
+        self._api_key = api_key
+
+    def translate(self, s: str) -> str:
+        resp = requests.post(
+            'https://api-free.deepl.com/v2/translate',
+            headers={
+                'Authorization': f'DeepL-Auth-Key {self._api_key}',
+                'Content-Type': 'application/json'
+            },
+            json={
+                'text': [s],
+                'target_lang': 'UK'
+            },
+        )
+        logger.info(resp.json())
+        return resp.json()['translations'][0]['text']
+
+
+class OpenAITranslator:
     def __init__(self, client: OpenAI):
         self._client = client
 
@@ -221,8 +243,10 @@ class ContentManager:
         offer.description = comp.choices[0].message.content
         offer.save(update_fields=['description'])
 
+
 def get_content_manager():
     return ContentManager(OpenAI(**settings.OPENAI_CREDENTIALS))
 
+
 def get_translator():
-    return Translator(OpenAI(**settings.OPENAI_CREDENTIALS))
+    return DeeplTranslator(settings.DEEPL_API_KEY)

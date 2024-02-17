@@ -147,6 +147,8 @@ OPENAI_CREDENTIALS = {
     'organization': env.get('OPENAI_ORGANIZATION'),
 }
 
+DEEPL_API_KEY = env.get('DEEPL_API_KEY')
+
 
 try:
     from trade_harbor.local_settings import *

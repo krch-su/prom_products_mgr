@@ -1177,40 +1177,6 @@ greenlet = "3.0.1"
 pyee = "11.0.1"
 
 [[package]]
-name = "playwright-recaptcha"
-version = "0.4.2"
-description = "A library for solving reCAPTCHA v2 and v3 with Playwright"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "playwright-recaptcha-0.4.2.tar.gz", hash = "sha256:f6b1652bb2121b16966902b6801af0fb3be77d99b0fc6e5b6677712e5cbb9d03"},
-    {file = "playwright_recaptcha-0.4.2-py3-none-any.whl", hash = "sha256:5006228237f6cc10092911208b6fceef6f3fb84e4239eb96828fd894220fa6dd"},
-]
-
-[package.dependencies]
-playwright = ">=1.33.0"
-pydub = "0.25.1"
-SpeechRecognition = "3.10.1"
-tenacity = "8.2.3"
-
-[[package]]
-name = "playwright-stealth"
-version = "1.0.6"
-description = "playwright stealth"
-optional = false
-python-versions = ">=3, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-files = [
-    {file = "playwright-stealth-1.0.6.tar.gz", hash = "sha256:b504d951d00fac755c7d13665a29611d415180510bd7d23f14ebc89439ba2043"},
-    {file = "playwright_stealth-1.0.6-py3-none-any.whl", hash = "sha256:b1b2bcf58eb6859aa53d42c49b91c4e27b74a6d13fc3d0c85eea513dd55efda3"},
-]
-
-[package.dependencies]
-playwright = "*"
-
-[package.extras]
-test = ["pytest"]
-
-[[package]]
 name = "prompt-toolkit"
 version = "3.0.43"
 description = "Library for building powerful interactive command lines in Python"
@@ -1378,17 +1344,6 @@ files = [
 
 [package.dependencies]
 typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
-
-[[package]]
-name = "pydub"
-version = "0.25.1"
-description = "Manipulate audio with an simple and easy high level interface"
-optional = false
-python-versions = "*"
-files = [
-    {file = "pydub-0.25.1-py2.py3-none-any.whl", hash = "sha256:65617e33033874b59d87db603aa1ed450633288aefead953b30bded59cb599a6"},
-    {file = "pydub-0.25.1.tar.gz", hash = "sha256:980a33ce9949cab2a569606b65674d748ecbca4f0796887fd6f46173a7b0d30f"},
-]
 
 [[package]]
 name = "pyee"
@@ -1597,24 +1552,6 @@ files = [
 ]
 
 [[package]]
-name = "speechrecognition"
-version = "3.10.1"
-description = "Library for performing speech recognition, with support for several engines and APIs, online and offline."
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "SpeechRecognition-3.10.1-py2.py3-none-any.whl", hash = "sha256:69898b2b0bbd5bc65647c5ef833fe318ad74f02e8a6af5c9fd671933083660bc"},
-    {file = "SpeechRecognition-3.10.1.tar.gz", hash = "sha256:718731886b7836e20a06b9a2c6cace12a9e130971bb6af1b1dd130b22bad9f82"},
-]
-
-[package.dependencies]
-requests = ">=2.26.0"
-typing-extensions = "*"
-
-[package.extras]
-whisper-api = ["openai"]
-
-[[package]]
 name = "sqlparse"
 version = "0.4.4"
 description = "A non-validating SQL parser."
@@ -1629,20 +1566,6 @@ files = [
 dev = ["build", "flake8"]
 doc = ["sphinx"]
 test = ["pytest", "pytest-cov"]
-
-[[package]]
-name = "tenacity"
-version = "8.2.3"
-description = "Retry code until it succeeds"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "tenacity-8.2.3-py3-none-any.whl", hash = "sha256:ce510e327a630c9e1beaf17d42e6ffacc88185044ad85cf74c0a8887c6a0f88c"},
-    {file = "tenacity-8.2.3.tar.gz", hash = "sha256:5398ef0d78e63f40007c1fb4c0bff96e1911394d2fa8d194f77619c05ff6cc8a"},
-]
-
-[package.extras]
-doc = ["reno", "sphinx", "tornado (>=4.5)"]
 
 [[package]]
 name = "text-unidecode"
@@ -1738,4 +1661,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "45caae54509a245e543122f84e7e1d256711c0236ec4986ca8f54801848b1507"
+content-hash = "ffd6e223a27bf14cc7273a0864c342e63c8f3781acff1e0869d17d0acb25eba1"

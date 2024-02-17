@@ -14,7 +14,8 @@ from rangefilter.filters import NumericRangeFilterBuilder
 
 from . import models
 from .models import Offer, SupplierCategory
-from .tasks import translate, generate_offer_name, generate_offer_description, generate_content_and_translate
+from .tasks import translate_offers, generate_offer_name, generate_offer_description, generate_content_and_translate, \
+    translate_offer
 
 
 class HasImageFilter(SimpleListFilter):
@@ -151,7 +152,8 @@ class OfferAdmin(admin.ModelAdmin):
 
     @admin.action(description="Translate")
     def translate(self, request, queryset):
-        translate.delay(list(queryset.values_list('pk', flat=True)))
+        for offer in queryset:
+            translate_offer.delay(offer.pk)
 
     def autocomplete_keyphrase(self, request):
         term = request.GET.get('term')

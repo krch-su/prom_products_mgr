@@ -2,4 +2,4 @@ venv/
 postgres_data/
 db.sqlite3
 .env
-celery*
+ms-playwright/

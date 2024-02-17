@@ -158,10 +158,10 @@ class Translator:
     def __init__(self, client: OpenAI):
         self._client = client
 
-    def __call__(self, s: str) -> str:
+    def translate(self, s: str) -> str:
         comp = self._client.chat.completions.create(
             model="gpt-3.5-turbo",
-            max_tokens=110,
+            max_tokens=600,
             # temperature=0.6,
             timeout=10,
             messages=[
@@ -174,6 +174,7 @@ class Translator:
             ]
         )
         return comp.choices[0].message.content
+
 
 class ContentManager:
     def __init__(self, client: OpenAI):
@@ -222,3 +223,6 @@ class ContentManager:
 
 def get_content_manager():
     return ContentManager(OpenAI(**settings.OPENAI_CREDENTIALS))
+
+def get_translator():
+    return Translator(OpenAI(**settings.OPENAI_CREDENTIALS))

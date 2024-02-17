@@ -1,10 +1,11 @@
 import json
+import logging
 import xml.etree.ElementTree as ET
 
 import requests
 from django import forms
 from django.contrib import admin
-from django.contrib.admin import SimpleListFilter
+from django.contrib.admin import SimpleListFilter, RelatedFieldListFilter
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.db.models import Func, IntegerField, F
 from django.http import HttpResponseRedirect, JsonResponse
@@ -17,6 +18,8 @@ from .models import Offer, SupplierCategory
 from .tasks import translate_offers, generate_offer_name, generate_offer_description, generate_content_and_translate, \
     translate_offer
 
+
+logger = logging.getLogger(__name__)
 
 class HasImageFilter(SimpleListFilter):
     # Human-readable title which will be displayed in the
@@ -46,6 +49,20 @@ class HasImageFilter(SimpleListFilter):
             return queryset.filter(num_pictures=0)
         else:
             return queryset
+
+
+class CategoryFilter(RelatedFieldListFilter):
+    def __init__(self, field, request, params, model, model_admin, field_path):
+        self._model = model
+        super().__init__(field, request, params, model, model_admin, field_path)
+
+    def queryset(self, request, queryset):
+        if not self.lookup_val:
+            return queryset
+        root = self.field.related_model.objects.get(pk=int(self.lookup_val[0]))
+
+        return queryset.filter(category__in=root.get_all_children())
+
 
 
 class JsonSelectMultiple(forms.SelectMultiple):
@@ -97,7 +114,7 @@ class OfferAdmin(admin.ModelAdmin):
     list_filter = [
         "supplier_offer__supplier",
         "active",
-        "supplier_offer__category__site_category",
+        ("supplier_offer__category__site_category", CategoryFilter),
         "supplier_offer__available",
     ]
 
@@ -110,6 +127,7 @@ class OfferAdmin(admin.ModelAdmin):
         'translate'
     ]
 
+    @admin.display(description='Наявність')
     def display_available(self, obj):
         if obj.available:
             icon = '<img src="/static/admin/img/icon-yes.svg" alt="True">'
@@ -117,6 +135,7 @@ class OfferAdmin(admin.ModelAdmin):
             icon = '<img src="/static/admin/img/icon-no.svg" alt="False">'
         return format_html(icon)
 
+    @admin.display(description='Контент')
     def content_hints(self, obj):
         return format_html("""
             <a href="#"><span class="hint  hint--bottom  hint--info  hint--large" data-hint="{name_ua}">name_ua</span></a>
@@ -124,6 +143,7 @@ class OfferAdmin(admin.ModelAdmin):
             <a href="#"><span class="hint  hint--bottom  hint--info  hint--large" data-hint="{description}">description</span></a>
         """, name_ua=obj.name_ua, description_ua=obj.description_ua, description=obj.description)
 
+    @admin.display(description='Офер постачальника')
     def link_to_supplier_offer(self, obj):
         link = reverse("admin:supplies_supplieroffer_change", args=[obj.supplier_offer._id])
         return format_html('<a href="{}">#{}</a>', link, obj.supplier_offer.vendor_code)
@@ -200,7 +220,7 @@ class SupplierOfferAdmin(admin.ModelAdmin):
         "supplier",
         ("price", NumericRangeFilterBuilder()),
         HasImageFilter,
-        "category",
+        ("category", CategoryFilter),
 
     ]
 

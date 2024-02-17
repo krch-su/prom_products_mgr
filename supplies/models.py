@@ -1,5 +1,21 @@
 from django.db import models
+from django.db.models import Q
 from django.utils.safestring import mark_safe
+
+
+class TreeMixin:
+    def get_children_filters(self, include_self=True):
+        filters = Q(pk=0)
+        if include_self:
+            filters |= Q(pk=self.pk)
+        for c in self.__class__.objects.filter(parent_category=self):
+            _r = c.get_children_filters(include_self=True)
+            if _r:
+                filters |= _r
+        return filters
+
+    def get_all_children(self, include_self=True):
+        return self.__class__.objects.filter(self.get_children_filters(include_self))
 
 
 class Supplier(models.Model):
@@ -175,7 +191,7 @@ class Offer(models.Model):
         verbose_name_plural = 'Offers'
 
 
-class SiteCategory(models.Model):
+class SiteCategory(models.Model, TreeMixin):
     id = models.BigIntegerField(primary_key=True)
     parent_category = models.ForeignKey(
         'self',
@@ -194,7 +210,7 @@ class SiteCategory(models.Model):
         return self.name
 
 
-class SupplierCategory(models.Model):
+class SupplierCategory(models.Model, TreeMixin):
     id = models.BigIntegerField(primary_key=True)
     parent_category = models.ForeignKey(
         'self',

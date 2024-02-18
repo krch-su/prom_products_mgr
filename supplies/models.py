@@ -43,7 +43,7 @@ class SupplierOffer(models.Model):
     price_old = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     old_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     discount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    minimum_order_quantity = models.IntegerField(null=True)
+    minimum_order_quantity = models.IntegerField(null=True, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     currencyId = models.CharField(max_length=3)
     # categoryId = models.CharField(max_length=20)
@@ -52,27 +52,27 @@ class SupplierOffer(models.Model):
     name = models.CharField(max_length=255)
     name_ua = models.CharField(max_length=255)
     vendorCode = models.CharField(max_length=25)
-    barcode = models.CharField(max_length=25)
-    article = models.CharField(max_length=25)
-    vendor = models.CharField(max_length=64, null=True)
-    model = models.CharField(max_length=255, null=True)
-    country_of_origin = models.CharField(max_length=50, null=True)
-    country = models.CharField(max_length=50, null=True)
+    barcode = models.CharField(max_length=25, blank=True)
+    article = models.CharField(max_length=25, blank=True)
+    vendor = models.CharField(max_length=64, null=True, blank=True)
+    model = models.CharField(max_length=255, null=True, blank=True)
+    country_of_origin = models.CharField(max_length=50, null=True, blank=True)
+    country = models.CharField(max_length=50, null=True, blank=True)
     description = models.TextField()
     description_ua = models.TextField()
-    quantity_in_stock = models.PositiveIntegerField(null=True)
-    stock_quantity = models.PositiveIntegerField(null=True)
+    quantity_in_stock = models.PositiveIntegerField(null=True, blank=True)
+    stock_quantity = models.PositiveIntegerField(null=True, blank=True)
     keywords = models.JSONField(null=True)
     keywords_ua = models.JSONField(null=True)
     params = models.TextField(null=True)
     pictures = models.JSONField()
-    gtin = models.CharField(max_length=64, null=True)
-    mpn = models.CharField(max_length=64, null=True)
+    gtin = models.CharField(max_length=64, null=True, blank=True)
+    mpn = models.CharField(max_length=64, null=True, blank=True)
 
     category = models.ForeignKey(
         'SupplierCategory',
         on_delete=models.DO_NOTHING,
-        null=True
+        null=True, blank=True
     )
 
     @property

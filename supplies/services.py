@@ -265,4 +265,4 @@ def get_content_manager():
 
 
 def get_translator():
-    return DeeplTranslator(settings.DEEPL_API_KEY)
+    return OpenAITranslator(OpenAI(**settings.OPENAI_CREDENTIALS))

@@ -49,7 +49,7 @@ def generate_content_and_translate(offer_ids: List[int]):
         tasks.append(generate_offer_name.s(id_))
         tasks.append(generate_offer_description.s(id_))
 
-    chord(*tasks)(translate_offers.s(offer_ids=offer_ids))
+    chord(tasks)(translate_offers.s(offer_ids=offer_ids))
 
     # name_translates = deepl.translate(list(offers.values_list('name', flat=True)))
     # desc_translates = deepl.translate(list(offers.values_list('description', flat=True)))

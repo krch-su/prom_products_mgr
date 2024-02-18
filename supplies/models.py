@@ -36,7 +36,7 @@ class SupplierOffer(models.Model):
 
     id = models.CharField(max_length=255)
     available = models.BooleanField(default=False)
-    group_id = models.BigIntegerField(null=True)
+    group_id = models.BigIntegerField(null=True, blank=True)
     url = models.URLField(null=True)
     optPrice = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     oldprice = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)

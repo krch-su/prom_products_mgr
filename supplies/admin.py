@@ -60,8 +60,9 @@ class CategoryFilter(RelatedFieldListFilter):
         if not self.lookup_val:
             return queryset
         root = self.field.related_model.objects.get(pk=int(self.lookup_val[0]))
+        kw = {f'{self.field_path}__in': root.get_all_children()}
 
-        return queryset.filter(category__in=root.get_all_children())
+        return queryset.filter(**kw)
 
 
 

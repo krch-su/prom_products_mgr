@@ -155,3 +155,5 @@ try:
 except ImportError:
     from trade_harbor.production_settings import *
 
+CELERY_WORKER_MAX_MEMORY_PRE_CHILD = 5000
+CELERY_WORKER_CONCURRENCY = 2

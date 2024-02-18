@@ -1,12 +1,13 @@
-FROM python:3.10
+FROM python:3.10-slim-bookworm
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
 
 RUN apt-get update \
   # dependencies for building Python packages
   && apt-get install -y build-essential \
+  && apt-get install -y git \
   # psycopg2 dependencies
   && apt-get install -y libpq-dev \
   # Translations dependencies
@@ -19,6 +20,9 @@ RUN apt-get update \
 # Requirements are installed here to ensure they will be cached.
 COPY ./requirements.txt /requirements.txt
 RUN pip install -r /requirements.txt
+
+RUN apt-get remove -y build-essential \
+    && apt-get remove -y git
 
 COPY ./compose/prod/django/entrypoint.sh /entrypoint.sh
 RUN sed -i 's/\r$//g' /entrypoint.sh
@@ -42,6 +46,8 @@ RUN chmod +x /start-flower.sh
 
 RUN mkdir -p $APP_HOME/static
 RUN mkdir -p $APP_HOME/media
+
+COPY . /app
 WORKDIR /app
 
 ENTRYPOINT ["/entrypoint.sh"]

@@ -69,8 +69,8 @@ def generate_offers_xml(offer_queryset: QuerySet[Offer]):
             if field == 'params':
                 params_root = ET.fromstring(f'<root>{value}</root>')
                 insert_elements(params_root, offer_element)
-            elif field in ['keywords', 'keywords_ua']:
-                ET.SubElement(offer_element, field).text = ','.join(value or [])
+            elif field in ['keywords', 'keywords_ua'] and value:
+                ET.SubElement(offer_element, field).text = ','.join(value)
             elif field == 'pictures':
                 for url in value:
                     ET.SubElement(offer_element, 'picture').text = str(url)

@@ -231,6 +231,13 @@ class SupplierOfferAdmin(admin.ModelAdmin):
         for item in queryset:
             Offer.objects.get_or_create(supplier_offer=item)
 
+    class Media:
+        css = {
+            'all': ('sticky_toolbar.css', )
+        }
+
+        js = ('scroll_preserve.js', )
+
 
 @admin.register(models.Supplier)
 class SupplierAdmin(admin.ModelAdmin):

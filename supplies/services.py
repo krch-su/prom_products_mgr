@@ -28,7 +28,7 @@ def insert_elements(source_root, target_root):
 
 def generate_offers_xml(offer_queryset: QuerySet[Offer]):
     # Create the XML structure
-    root = ET.Element("catalog")
+    root = ET.Element("yml_catalog")
 
     print(offer_queryset.count())
 

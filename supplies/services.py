@@ -54,7 +54,7 @@ def get_offers_data(offer_queryset):
         for k, v in supplier_offer_data.items():
             logger.debug(f'{k}:{(offer_data.get(k, v) or v)}')
 
-            if k in ['keywords', 'keywords_ua']:
+            if k in ['keywords', 'keywords_ua'] and (v or offer_data.get(v, None)):
                 val = ', '.join((v or []) + (offer_data.get(k, []) or []))
             elif isinstance(v, bool):
                 val = str(offer_data.get(k, v)).lower()

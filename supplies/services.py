@@ -62,8 +62,9 @@ def get_offers_data(offer_queryset):
         supplier_offer_data = model_to_json(offer.supplier_offer, exclude_fields)
         attrs = {'id': str(offer.pk)}
 
-        if offer.supplier_offer.category:
-            offer_result['categoryId'] = offer.category.id
+        category = offer.supplier_offer.category
+        if category and category.site_category:
+            offer_result['categoryId'] = category.site_category.id
 
         for k, v in supplier_offer_data.items():
             logger.debug(f'{k}:{(offer_data.get(k, v) or v)}')

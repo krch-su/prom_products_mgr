@@ -73,13 +73,11 @@ def get_offers_data(offer_queryset):
             elif isinstance(v, bool):
                 val = str(offer_data.get(k, v)).lower()
             elif k == 'pictures':
-                continue
+                val = v
             elif (offer_data.get(k, v) or v) is not None:
                 val = str(offer_data.get(k, v) or v)
             else:
                 continue
-
-            val = replace_symbols(val)
 
             if k in ['id', 'available', 'group_id']:
                 attrs[k] = val

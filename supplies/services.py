@@ -133,7 +133,8 @@ def gen_xml(offers_data: List[Dict]):
                     ET.SubElement(offer_el, 'picture').text = str(url)
             else:
                 ET.SubElement(offer_el, field).text = str(value)
-    return ET.tostring(root, encoding="utf-8").decode("utf-8")
+    return ('<?xml version="1.0" encoding="UTF-8" ?><!DOCTYPE yml_catalog SYSTEM "shops.dtd">' +
+            ET.tostring(root, encoding="utf-8").decode("utf-8"))
 
 
 def generate_offers_xml(offer_queryset: QuerySet[Offer]):

@@ -39,7 +39,7 @@ def model_to_json(model, exclude_fields = None):
 
 
 def get_offers_data(offer_queryset):
-    exclude_fields = ['_id', 'supplier', 'created_at', 'updated_at']
+    exclude_fields = ['_id', 'supplier', 'created_at', 'updated_at', 'optPrice', 'category']
 
     offers = []
     for offer in offer_queryset:
@@ -47,20 +47,29 @@ def get_offers_data(offer_queryset):
         supplier_offer_data = model_to_json(offer.supplier_offer, exclude_fields)
         attrs = {}
 
+        if offer.supplier_offer.category:
+            supplier_offer_data['categoryId'] = offer.supplier_offer.category.id
+
         for k, v in supplier_offer_data.items():
+            logger.debug(f'{k}:{offer_data.get(k, v)}')
+
             if k in ['keywords', 'keywords_ua']:
-                val = ', '.join((v or []) + (offer_data[k] or []))
+                val = ', '.join((v or []) + (offer_data.get(k, []) or []))
             elif isinstance(v, bool):
                 val = str(offer_data.get(k, v)).lower()
+            elif k == 'pictures':
+                continue
+            elif (offer_data.get(k, v) or v) is not None:
+                val = str(offer_data.get(k, v) or v)
             else:
-                val = str(offer_data.get(k, v))
-
-            if val == 'None':
                 continue
 
+            # if val == 'None':
+            #     continue
+            # logger.debug(f'{k}:{val}')
             if k in ['id', 'available', 'group_id']:
                 attrs[k] = val
-            else:
+            elif val :
                 supplier_offer_data[k] = val
 
         supplier_offer_data = {
@@ -85,7 +94,7 @@ def gen_xml(offers_data: List[Dict]):
     offers = ET.SubElement(shop, "offers")
 
     for o in offers_data:
-        offer_el = ET.SubElement(offers, "offer", **o.pop('_attrs'))
+        offer_el = ET.SubElement(offers, "offer", attrib=o.pop('_attrs'))
         for field, value in o.items():
             if field == 'params':
                 params_root = ET.fromstring(f'<root>{value}</root>')

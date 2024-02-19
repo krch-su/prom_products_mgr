@@ -43,15 +43,16 @@ def get_offers_data(offer_queryset):
 
     offers = []
     for offer in offer_queryset:
+        offer_result = {}
         offer_data = model_to_json(offer)
         supplier_offer_data = model_to_json(offer.supplier_offer, exclude_fields)
         attrs = {'id': str(offer.pk)}
 
         if offer.supplier_offer.category:
-            supplier_offer_data['categoryId'] = offer.supplier_offer.category.id
+            offer_result['categoryId'] = offer.supplier_offer.category.id
 
         for k, v in supplier_offer_data.items():
-            logger.debug(f'{k}:{offer_data.get(k, v)}')
+            logger.debug(f'{k}:{(offer_data.get(k, v) or v)}')
 
             if k in ['keywords', 'keywords_ua']:
                 val = ', '.join((v or []) + (offer_data.get(k, []) or []))
@@ -64,22 +65,19 @@ def get_offers_data(offer_queryset):
             else:
                 continue
 
-            # if val == 'None':
-            #     continue
-            # logger.debug(f'{k}:{val}')
             if k in ['id', 'available', 'group_id']:
                 attrs[k] = val
-            elif val :
-                supplier_offer_data[k] = val
+            else:
+                offer_result[k] = val
 
-        supplier_offer_data = {
-            k: v for k, v in supplier_offer_data.items()
+        offer_result = {
+            k: v for k, v in offer_result.items()
             if k not in attrs
         }
 
-        supplier_offer_data['_attrs'] = attrs
+        offer_result['_attrs'] = attrs
 
-        offers.append(supplier_offer_data)
+        offers.append(offer_result)
     return offers
 
 

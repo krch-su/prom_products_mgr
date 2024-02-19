@@ -23,7 +23,7 @@ from supplies.views import XMLFeedView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('feed/', XMLFeedView.as_view()),
+    path('feed.xml', XMLFeedView.as_view()),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.DEBUG:

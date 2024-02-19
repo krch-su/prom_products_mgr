@@ -279,9 +279,11 @@ class CategoriesImportForm(forms.Form):
 
 @admin.register(models.SiteCategory)
 class CategoryAdmin(admin.ModelAdmin):
+    list_display = ['name', 'parent_category']
     change_list_template = 'admin/supplies/site_category/change_list.html'
     form = CategoryForm
     search_fields = ['name']
+    list_filter = ['parent_category']
 
     def get_urls(self):
         urls = super().get_urls()

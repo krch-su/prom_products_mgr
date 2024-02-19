@@ -39,13 +39,13 @@ def model_to_json(model, exclude_fields = None):
 
 
 def get_offers_data(offer_queryset):
-    exclude_fields = ['_id', 'supplier', 'created_at', 'updated_at', 'optPrice', 'category']
+    exclude_fields = ['_id', 'supplier', 'created_at', 'updated_at', 'optPrice', 'category', 'id']
 
     offers = []
     for offer in offer_queryset:
         offer_data = model_to_json(offer)
         supplier_offer_data = model_to_json(offer.supplier_offer, exclude_fields)
-        attrs = {}
+        attrs = {'id': offer_data['pk']}
 
         if offer.supplier_offer.category:
             supplier_offer_data['categoryId'] = offer.supplier_offer.category.id

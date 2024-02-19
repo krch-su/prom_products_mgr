@@ -10,7 +10,7 @@ from django.core.serializers import serialize
 from django.db.models import QuerySet
 from openai import OpenAI
 
-from supplies.models import Offer, SupplierOffer, Supplier, SupplierCategory
+from supplies.models import Offer, SupplierOffer, Supplier, SupplierCategory, SiteCategory
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +91,20 @@ def gen_xml(offers_data: List[Dict]):
     ET.SubElement(shop, "url").text = "111"
     currencies = ET.SubElement(shop, "currencies")
     ET.SubElement(currencies, "currency", id='UAH', rate='1')
+    categories = ET.SubElement(shop, "categories")
     offers = ET.SubElement(shop, "offers")
+
+    categories_qs = SiteCategory.objects.all()
+
+    for c in categories_qs:
+        attrs = {'id': str(c.id)}
+        if c.parent_category:
+            attrs['parentId'] = str(c.parent_category.id)
+        category = ET.SubElement(
+            categories, "category",
+            attrib=attrs
+        )
+        category.text = c.name
 
     for o in offers_data:
         offer_el = ET.SubElement(offers, "offer", attrib=o.pop('_attrs'))
@@ -104,9 +117,7 @@ def gen_xml(offers_data: List[Dict]):
             elif field == 'pictures':
                 for url in value:
                     ET.SubElement(offer_el, 'picture').text = str(url)
-            elif value not in [None, ""]:
-                if isinstance(value, bool):
-                    value = str(value).lower()
+            else:
                 ET.SubElement(offer_el, field).text = str(value)
     return ET.tostring(root, encoding="utf-8").decode("utf-8")
 

@@ -63,7 +63,7 @@ def get_offers_data(offer_queryset):
         attrs = {'id': str(offer.pk)}
 
         if offer.supplier_offer.category:
-            offer_result['categoryId'] = offer.supplier_offer.category.id
+            offer_result['categoryId'] = offer.category.id
 
         for k, v in supplier_offer_data.items():
             logger.debug(f'{k}:{(offer_data.get(k, v) or v)}')

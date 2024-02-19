@@ -37,6 +37,20 @@ def model_to_json(model, exclude_fields = None):
         if k not in exclude_fields
     }
 
+def replace_symbols(input_text):
+    replacements = {
+        '"': '&quot;',
+        '&': '&amp;',
+        '>': '&gt;',
+        '<': '&lt;',
+        "'": '&apos;'
+    }
+
+    for symbol, replacement in replacements.items():
+        input_text = input_text.replace(symbol, replacement)
+
+    return input_text
+
 
 def get_offers_data(offer_queryset):
     exclude_fields = ['_id', 'supplier', 'created_at', 'updated_at', 'optPrice', 'category', 'id']
@@ -64,6 +78,8 @@ def get_offers_data(offer_queryset):
                 val = str(offer_data.get(k, v) or v)
             else:
                 continue
+
+            val = replace_symbols(val)
 
             if k in ['id', 'available', 'group_id']:
                 attrs[k] = val

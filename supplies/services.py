@@ -40,33 +40,35 @@ def model_to_json(model, exclude_fields = None):
 
 def get_offers_data(offer_queryset):
     exclude_fields = ['_id', 'supplier', 'created_at', 'updated_at']
-    override_fields = ['url', 'name', 'name_ua', 'description', 'description_ua',
-                       'keywords', 'keywords_ua', 'pictures']
 
     offers = []
     for offer in offer_queryset:
         offer_data = model_to_json(offer)
         supplier_offer_data = model_to_json(offer.supplier_offer, exclude_fields)
-        supplier_offer_data['_attrs'] = {}
+        attrs = {}
 
-        for f in override_fields:
-            val = offer_data[f]
+        for k, v in supplier_offer_data.items():
+            if k in ['keywords', 'keywords_ua']:
+                val = ','.join((v or []) + (offer_data[k] or []))
+            elif isinstance(v, bool):
+                val = str(offer_data.get(k, v)).lower()
+            else:
+                val = str(offer_data.get(k, v))
 
-            if f in ['keywords', 'keywords_ua']:
-                logger.debug(type(supplier_offer_data[f]))
-                logger.debug(type(val))
-                val = ','.join((supplier_offer_data[f] or []) + (offer_data[f] or []))
-            elif isinstance(val, bool):
-                val = str(val).lower()
-            elif val is None:
+            if val == 'None':
                 continue
-            else:
-                val = str(val)
 
-            if f in ['id', 'available', 'group_id']:
-                supplier_offer_data['_attrs'][f] = val
+            if k in ['id', 'available', 'group_id']:
+                attrs[k] = val
             else:
-                supplier_offer_data[f] = val
+                supplier_offer_data[k] = val
+
+        supplier_offer_data = {
+            k: v for k, v in supplier_offer_data.items()
+            if k not in attrs
+        }
+
+        supplier_offer_data['_attrs'] = attrs
 
         offers.append(supplier_offer_data)
     return offers

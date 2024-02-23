@@ -1,7 +1,6 @@
 import json
 import logging
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass
 from typing import List, Dict
 
 import requests
@@ -138,83 +137,6 @@ def gen_xml(offers_data: List[Dict]):
 
 def generate_offers_xml(offer_queryset: QuerySet[Offer]):
     return gen_xml(get_offers_data(offer_queryset))
-    # Create the XML structure
-    root = ET.Element("yml_catalog")
-
-    print(offer_queryset.count())
-
-    shop = ET.SubElement(root, "shop")
-
-    ET.SubElement(shop, "name").text = "111"  # You can fill in the shop details accordingly
-    ET.SubElement(shop, "company").text = "111"
-    ET.SubElement(shop, "url").text = "111"
-
-    currencies = ET.SubElement(shop, "currencies")
-    ET.SubElement(currencies, "currency", id='UAH', rate='1')
-
-    # Add currency elements if needed
-
-    # categories = ET.SubElement(shop, "categories")
-
-    # Add category elements if needed
-
-    offers = ET.SubElement(shop, "offers")
-
-    for offer_instance in offer_queryset:
-        json_data = serialize('json', [offer_instance])
-        data = json.loads(json_data)[0]['fields']
-
-        supplier_data = serialize('json', [offer_instance.supplier_offer])
-        supplier_fields = json.loads(supplier_data)[0]['fields']
-        # Include all fields from SupplierOffer in the offer element
-
-        offer_element_data = dict(
-            id=str(supplier_fields['id']),
-            available=str(supplier_fields['available']).lower()
-        )
-        if data['group_id']:
-            offer_element_data['group_id'] = data['group_id']
-        offer_element = ET.SubElement(offers, "offer", **offer_element_data)
-
-        for field, value in supplier_fields.items():
-            if field in ['id', '_id', 'supplier', 'created_at', 'updated_at', 'available']:
-                continue
-
-            if field == 'params':
-                params_root = ET.fromstring(f'<root>{value}</root>')
-                insert_elements(params_root, offer_element)
-            elif field in ['keywords', 'keywords_ua'] and value:
-                ET.SubElement(offer_element, field).text = ','.join(value)
-            elif field == 'pictures':
-                for url in value:
-                    ET.SubElement(offer_element, 'picture').text = str(url)
-            elif value not in [None, ""]:
-                if isinstance(value, bool):
-                    value = str(value).lower()
-                ET.SubElement(offer_element, field).text = str(value)
-
-        # Replace overridden fields from Offer
-        overridden_fields = ['url', 'name', 'name_ua', 'description', 'description_ua',
-                             'keywords', 'keywords_ua', 'pictures']
-
-        for field in overridden_fields:
-            value = data[field]
-            el = offer_element.find(f"{field}") or ET.SubElement(offer_element, field)
-            if data[field] not in [None, ""]:
-                if field in ['keywords', 'keywords_ua']:
-                    if not value:
-                        continue
-                    t = el.text or ''
-                    t = t + ',' if t else ''
-                    el.text = t + ','.join(value)
-                else:
-                    if isinstance(value, bool):
-                        value = str(value).lower()
-                    el.text = str(value)
-
-    # Convert the ElementTree to a string
-    xml_data = ET.tostring(root, encoding="utf-8").decode("utf-8")
-    return xml_data
 
 
 def save_offers(xml_data, supplier):

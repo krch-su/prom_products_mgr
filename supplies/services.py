@@ -1,10 +1,17 @@
 import json
 import logging
+import os
 import xml.etree.ElementTree as ET
+from io import BytesIO
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import List, Dict
+from PIL import Image, ImageDraw
+import colorsys
 
 import requests
 from django.conf import settings
+from django.core.files import File
 from django.core.serializers import serialize
 from django.db.models import QuerySet
 from openai import OpenAI
@@ -66,14 +73,12 @@ def get_offers_data(offer_queryset):
             offer_result['categoryId'] = category.site_category.id
 
         for k, v in supplier_offer_data.items():
-            logger.debug(f'{k}:{(offer_data.get(k, v) or v)}')
-
             if k in ['keywords', 'keywords_ua'] and (v or offer_data.get(v, None)):
                 val = ', '.join((v or []) + (offer_data.get(k, []) or []))
             elif isinstance(v, bool):
                 val = str(offer_data.get(k, v)).lower()
             elif k == 'pictures':
-                val = v
+                val = (offer_data.get(k, []) or []) + (v or [])
             elif (offer_data.get(k, v) or v) is not None:
                 val = str(offer_data.get(k, v) or v)
             else:
@@ -303,6 +308,81 @@ class ContentManager:
         offer.description = comp.choices[0].message.content
         offer.save(update_fields=['description'])
 
+def add_rainbow_border(img, output_image_path, border_size=20):
+    # Get the image dimensions
+    width, height = img.size
+
+    # Create a new image with larger dimensions
+    new_width = width + 2 * border_size
+    new_height = height + 2 * border_size
+    new_img = Image.new("RGB", (new_width, new_height))
+
+    # Paste the original image onto the new image
+    new_img.paste(img, (border_size, border_size))
+
+    # Create a drawing object
+    draw = ImageDraw.Draw(new_img)
+
+    # Define the number of rainbow colors
+    num_colors = 100
+
+    # Iterate through the rainbow colors and draw the border
+    for i in range(border_size):
+        color = colorsys.hsv_to_rgb(i / num_colors, 1.0, 1.0)
+        color = tuple(int(c * 255) for c in color)
+        draw.rectangle(
+            [i, i, new_width - i - 1, new_height - i - 1],
+            outline=color
+        )
+
+    # Save the result
+    new_img.save(output_image_path)
+
+
+def download_image(url):
+    response = requests.get(url)
+    if response.status_code == 200:
+        return BytesIO(response.content)
+    return None
+
+def add_border_to_first_image(request, offer):
+    # Check if pictures field is not empty
+    if offer.supplier_offer.pictures:
+        # Get the first image URL
+        first_image_url = offer.supplier_offer.pictures[0]
+
+        # Download the image
+        image_content = download_image(first_image_url)
+
+        if image_content:
+            # Create an Image object from the downloaded content
+            img = Image.open(image_content)
+
+            # Construct the absolute file paths
+            media_root = settings.MEDIA_ROOT
+            output_dir = os.path.join(media_root, 'supplies/images')
+            path = Path(output_dir)
+            path.mkdir(parents=True, exist_ok=True)
+            output_image_name = f"bordered_{os.path.basename(first_image_url)}"
+            output_image_path = os.path.join(output_dir, output_image_name)
+
+            # Apply border and save the modified image
+            add_rainbow_border(img, output_image_path)
+
+            # # Update the pictures field with the new URL
+            # new_image_url = os.path.join(settings.MEDIA_URL, output_image_name)
+            output_url = os.path.join(settings.MEDIA_URL, 'supplies/images')
+            # Construct the absolute URL of the modified image
+            absolute_url = request.build_absolute_uri(os.path.join(output_url, output_image_name))
+            logger.debug(absolute_url)
+            offer.pictures = []
+            # Update the pictures field with the new URL
+            offer.pictures.insert(0, absolute_url)
+
+            # offer.pictures.append(new_image_url)
+
+            # Save the updated offer instance
+            offer.save()
 
 def get_content_manager():
     return ContentManager(OpenAI(**settings.OPENAI_CREDENTIALS))

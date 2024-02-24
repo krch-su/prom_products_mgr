@@ -6,7 +6,7 @@ from trade_harbor import env
 SECRET_KEY = env.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.get('DEBUG', default=False)
+DEBUG = env.get('DEBUG', env.boolean, default=False)
 
 
 sentry_sdk.init(

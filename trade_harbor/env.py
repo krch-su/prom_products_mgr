@@ -13,6 +13,10 @@ class ConfigurationOptionNotProvided(ValueError):
         self.message = message
 
 
+def boolean(s: str):
+    return s.lower() in ['1', 'true']
+
+
 def get(
     key: str,
     coerce: Callable[[str], Any] = str,

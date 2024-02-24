@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 import requests
 from django import forms
 from django.contrib import admin
-from django.contrib.admin import SimpleListFilter, RelatedFieldListFilter
+from django.contrib.admin import SimpleListFilter, RelatedFieldListFilter, BooleanFieldListFilter
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.db.models import Func, IntegerField, F
 from django.http import HttpResponseRedirect, JsonResponse
@@ -15,9 +15,9 @@ from rangefilter.filters import NumericRangeFilterBuilder
 
 from . import models
 from .models import Offer, SupplierCategory
-from .tasks import translate_offers, generate_offer_name, generate_offer_description, generate_content_and_translate, \
+from .services import add_border_to_first_image
+from .tasks import generate_offer_name, generate_offer_description, generate_content_and_translate, \
     translate_offer
-
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +47,29 @@ class HasImageFilter(SimpleListFilter):
             return queryset.filter(num_pictures__gt=0)
         elif self.value() == 'False':
             return queryset.filter(num_pictures=0)
+        else:
+            return queryset
+
+
+class PublishedFilter(SimpleListFilter):
+    # Human-readable title which will be displayed in the
+    # right admin sidebar just above the filter options.
+    title = 'Is Published'
+
+    # Parameter for the filter that will be used in the URL query.
+    parameter_name = 'is_published'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('True', True),
+            ('False', False)
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'True':
+            return queryset.filter(offer__isnull=False)
+        elif self.value() == 'False':
+            return queryset.filter(offer__isnull=True)
         else:
             return queryset
 
@@ -110,7 +133,13 @@ class OfferAdmin(admin.ModelAdmin):
         'main_image_tag',
     )
 
-    search_fields = ['name', 'supplier_offer__category__site_category__name']
+    search_fields = [
+        'name',
+        'supplier_offer__category__site_category__name',
+        'supplier_offer__vendorCode',
+        'supplier_offer__barcode',
+        'supplier_offer__article'
+    ]
 
     list_filter = [
         "supplier_offer__supplier",
@@ -125,7 +154,8 @@ class OfferAdmin(admin.ModelAdmin):
         'generate_content_and_translate',
         'generate_title',
         'generate_description',
-        'translate'
+        'translate',
+        'add_border'
     ]
 
     @admin.display(description='Наявність')
@@ -148,6 +178,11 @@ class OfferAdmin(admin.ModelAdmin):
     def link_to_supplier_offer(self, obj):
         link = reverse("admin:supplies_supplieroffer_change", args=[obj.supplier_offer._id])
         return format_html('<a href="{}">#{}</a>', link, obj.supplier_offer.vendor_code)
+
+    @admin.action(description="Add border to image")
+    def add_border(self, request, queryset):
+        for offer in queryset:
+            add_border_to_first_image(request, offer)
 
     @admin.action(description="Deactivate offers")
     def deactivate(self, request, queryset):
@@ -214,7 +249,13 @@ class SupplierOfferAdmin(admin.ModelAdmin):
         'price',
         'main_image_tag'
     )
-    search_fields = ['name', 'category__name']
+    search_fields = [
+        'name',
+        'category__name',
+        'vendorCode',
+        'barcode',
+        'article'
+    ]
 
     list_filter = [
         "available",
@@ -222,7 +263,7 @@ class SupplierOfferAdmin(admin.ModelAdmin):
         ("price", NumericRangeFilterBuilder()),
         HasImageFilter,
         ("category", CategoryFilter),
-
+        PublishedFilter,
     ]
 
     actions = ['publish']

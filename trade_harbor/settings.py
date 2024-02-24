@@ -150,10 +150,10 @@ OPENAI_CREDENTIALS = {
 DEEPL_API_KEY = env.get('DEEPL_API_KEY')
 
 
-# try:
-#     from trade_harbor.local_settings import *
-# except ImportError:
-from trade_harbor.production_settings import *
+try:
+    from trade_harbor.local_settings import *
+except ImportError:
+    from trade_harbor.production_settings import *
 
 CELERY_WORKER_MAX_MEMORY_PRE_CHILD = 10000
 CELERY_WORKER_CONCURRENCY = 4

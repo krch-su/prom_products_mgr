@@ -135,6 +135,7 @@ class OfferAdmin(admin.ModelAdmin):
 
     search_fields = [
         'name',
+        'name_ua',
         'supplier_offer__category__site_category__name',
         'supplier_offer__vendorCode',
         'supplier_offer__barcode',

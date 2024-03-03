@@ -3,7 +3,7 @@ from django.http import HttpResponse, HttpResponseNotFound, JsonResponse
 from django.views.generic import View
 
 from supplies.models import Offer
-from supplies.services import generate_offers_xml
+from supplies.services.feed import generate_offers_xml
 
 
 class XMLFeedView(View):

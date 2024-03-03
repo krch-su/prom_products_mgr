@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 
 from supplies.models import Supplier
-from supplies.services import load_offers
+from supplies.services.feed import load_offers
 
 
 class Command(BaseCommand):

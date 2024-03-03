@@ -5,7 +5,8 @@ from celery.utils.log import get_task_logger
 from openai import APITimeoutError
 
 from supplies.models import Offer, Supplier
-from supplies.services import get_content_manager, load_offers, get_translator
+from supplies.factories import get_content_manager, get_translator
+from supplies.services.feed import load_offers
 
 logger = get_task_logger(__name__)
 
@@ -28,14 +29,14 @@ def translate_offers(*_, offer_ids: List[int]):
 
 @shared_task(autoretry_for=(APITimeoutError,), retry_kwargs={'max_retries': 5}, retry_backoff=True)
 def generate_offer_name(offer_id):
-    get_content_manager().generate_title(Offer.objects.get(pk=offer_id))
+    get_content_manager().rewrite_title(Offer.objects.get(pk=offer_id))
 
 
 @shared_task(autoretry_for=(APITimeoutError,), retry_kwargs={'max_retries': 5}, retry_backoff=True)
 def generate_offer_description(offer_id, *_):
     logger.info(offer_id)
     logger.info(_)
-    get_content_manager().generate_description(Offer.objects.get(pk=offer_id))
+    get_content_manager().rewrite_description(Offer.objects.get(pk=offer_id))
 
 
 @shared_task()

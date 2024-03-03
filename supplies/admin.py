@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 import requests
 from django import forms
 from django.contrib import admin
-from django.contrib.admin import SimpleListFilter, RelatedFieldListFilter, BooleanFieldListFilter
+from django.contrib.admin import SimpleListFilter, RelatedFieldListFilter
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.db.models import Func, IntegerField, F
 from django.http import HttpResponseRedirect, JsonResponse
@@ -14,12 +14,12 @@ from django.utils.html import format_html
 from rangefilter.filters import NumericRangeFilterBuilder
 
 from . import models
-from .models import Offer, SupplierCategory
-from .services import add_border_to_first_image
+from .services.images import add_infographics_to_firs_image, add_border_to_first_image
 from .tasks import generate_offer_name, generate_offer_description, generate_content_and_translate, \
     translate_offer
 
 logger = logging.getLogger(__name__)
+
 
 class HasImageFilter(SimpleListFilter):
     # Human-readable title which will be displayed in the
@@ -86,7 +86,6 @@ class CategoryFilter(RelatedFieldListFilter):
         kw = {f'{self.field_path}__in': root.get_all_children()}
 
         return queryset.filter(**kw)
-
 
 
 class JsonSelectMultiple(forms.SelectMultiple):
@@ -156,7 +155,8 @@ class OfferAdmin(admin.ModelAdmin):
         'generate_title',
         'generate_description',
         'translate',
-        'add_border'
+        'add_border',
+        'add_infographics',
     ]
 
     @admin.display(description='Наявність')
@@ -184,6 +184,11 @@ class OfferAdmin(admin.ModelAdmin):
     def add_border(self, request, queryset):
         for offer in queryset:
             add_border_to_first_image(request, offer)
+
+    @admin.action(description="Add infographics to image")
+    def add_infographics(self, request, queryset):
+        for offer in queryset:
+            add_infographics_to_firs_image(request, offer)
 
     @admin.action(description="Deactivate offers")
     def deactivate(self, request, queryset):
@@ -234,7 +239,7 @@ class OfferAdmin(admin.ModelAdmin):
 
     class Media:
         css = {
-            'all': ('hint.min.css', 'sticky_toolbar.css')
+            'all': ('hint.min.css', 'sticky_toolbar.css', 'zoom.css')
         }
 
         js = ('scroll_preserve.js', )
@@ -244,6 +249,7 @@ class OfferAdmin(admin.ModelAdmin):
 class SupplierOfferAdmin(admin.ModelAdmin):
     list_display = (
         'vendor_code',
+        'supplier',
         'name',
         'category_display',
         'site_category',
@@ -261,9 +267,9 @@ class SupplierOfferAdmin(admin.ModelAdmin):
     list_filter = [
         "available",
         "supplier",
+        ("category", CategoryFilter),
         ("price", NumericRangeFilterBuilder()),
         HasImageFilter,
-        ("category", CategoryFilter),
         PublishedFilter,
     ]
 
@@ -272,7 +278,7 @@ class SupplierOfferAdmin(admin.ModelAdmin):
     @admin.action(description="Publish offers")
     def publish(self, request, queryset):
         for item in queryset:
-            Offer.objects.get_or_create(supplier_offer=item)
+            models.Offer.objects.get_or_create(supplier_offer=item)
 
     class Media:
         css = {
@@ -289,7 +295,7 @@ class SupplierAdmin(admin.ModelAdmin):
 
 class CategoryForm(forms.ModelForm):
     supplier_categories = forms.ModelMultipleChoiceField(
-        queryset=SupplierCategory.objects.all(),
+        queryset=models.SupplierCategory.objects.all(),
         widget=FilteredSelectMultiple("SupplierCategory", is_stacked=False),
         required=False,
     )
@@ -350,7 +356,6 @@ class CategoryAdmin(admin.ModelAdmin):
                             parent_category_id=category_element.get('parentId'),
                             name=category_element.text
                         ))
-                    print(categories)
                     models.SiteCategory.objects.bulk_create(
                         categories, update_conflicts=True, update_fields=[
                             'name',
@@ -360,15 +365,6 @@ class CategoryAdmin(admin.ModelAdmin):
 
                 self.message_user(request, 'Data imported from XML file')
                 return HttpResponseRedirect(reverse('admin:supplies_sitecategory_changelist'))
-        # else:
-        #     form = CategoriesImportForm()
-        #
-        # context = dict(
-        #     self.admin_site.each_context(request),
-        #     form=form,
-        # )
-        #
-        # return self.render_change_list(request, context)
 
 
 @admin.register(models.SupplierCategory)

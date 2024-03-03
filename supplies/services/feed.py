@@ -1,24 +1,12 @@
 import json
-import logging
-import os
-import xml.etree.ElementTree as ET
-from io import BytesIO
-from pathlib import Path
-from tempfile import NamedTemporaryFile
 from typing import List, Dict
-from PIL import Image, ImageDraw
-import colorsys
+from xml.etree import ElementTree as ET
 
 import requests
-from django.conf import settings
-from django.core.files import File
 from django.core.serializers import serialize
 from django.db.models import QuerySet
-from openai import OpenAI
 
-from supplies.models import Offer, SupplierOffer, Supplier, SupplierCategory, SiteCategory
-
-logger = logging.getLogger(__name__)
+from supplies.models import SiteCategory, Offer, SupplierCategory, SupplierOffer, Supplier
 
 
 def insert_elements(source_root, target_root):
@@ -42,6 +30,7 @@ def model_to_json(model, exclude_fields = None):
         k: v for k, v in json.loads(json_data)[0]['fields'].items()
         if k not in exclude_fields
     }
+
 
 def replace_symbols(input_text):
     replacements = {
@@ -219,174 +208,3 @@ def load_offers(supplier: Supplier):
         response.raise_for_status()
 
     return save_offers(response.content, supplier=supplier)
-
-
-class DeeplTranslator:
-    def __init__(self, api_key: str):
-        self._api_key = api_key
-
-    def translate(self, s: str) -> str:
-        resp = requests.post(
-            'https://api-free.deepl.com/v2/translate',
-            headers={
-                'Authorization': f'DeepL-Auth-Key {self._api_key}',
-                'Content-Type': 'application/json'
-            },
-            json={
-                'text': [s],
-                'target_lang': 'UK'
-            },
-        )
-        logger.info(resp.json())
-        return resp.json()['translations'][0]['text']
-
-
-class OpenAITranslator:
-    def __init__(self, client: OpenAI):
-        self._client = client
-
-    def translate(self, s: str) -> str:
-        comp = self._client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            max_tokens=600,
-            # temperature=0.6,
-            timeout=10,
-            messages=[
-                {"role": "user",
-                 "content": """
-                         Переклади цей текст українською мовою
-                         """},
-                {"role": "user", "content": s},
-                {"role": "user", "content": f'ПИШИ УКРАЇНСЬКОЮ МОВОЮ'}
-            ]
-        )
-        return comp.choices[0].message.content
-
-
-class ContentManager:
-    def __init__(self, client: OpenAI):
-        self._client = client
-
-    def generate_title(self, offer: Offer):
-        soffer = offer.supplier_offer
-        comp = self._client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            max_tokens=110,
-            # temperature=0.6,
-            timeout=10,
-            messages=[
-                {"role": "user",
-                 "content": """
-                 Create a concise keyword-rich product title in the format: <product type> <brand> <model> <key information> <features list>. 
-                 The title should reflect the main meaning of the product, should not exceed 110 characters, be brief, without any product description. 
-                 """},
-                {"role": "user", "content": f'{soffer.name}\n{offer.description}\n{soffer.params}'},
-                {"role": "user", "content": f'ПИШИ НА РУССКОМ ЯЗЫКЕ'}
-            ]
-        )
-        text = comp.choices[0].message.content
-        offer.name = text
-        offer.save(update_fields=['name'])
-
-    def generate_description(self, offer: Offer):
-        soffer = offer.supplier_offer
-
-        comp = self._client.chat.completions.create(
-            model="gpt-3.5-turbo-1106",
-            timeout=10,
-            max_tokens=600,
-            messages=[
-                {"role": "user",
-                 "content": """
-                 Составь описание для товара на основе предоставленной тебе информации. 
-                 Средняя длина описания – 400-800 символов
-                 """},
-                {"role": "user", "content": f'{soffer.name}\n{soffer.description}\n{soffer.params}'},
-                {"role": "user", "content": f'ПИШИ НА РУССКОМ ЯЗЫКЕ'}
-            ]
-        )
-        offer.description = comp.choices[0].message.content
-        offer.save(update_fields=['description'])
-
-def add_rainbow_border(img, output_image_path, border_size=20):
-    # Get the image dimensions
-    width, height = img.size
-
-    # Create a new image with larger dimensions
-    new_width = width + 2 * border_size
-    new_height = height + 2 * border_size
-    new_img = Image.new("RGB", (new_width, new_height))
-
-    # Paste the original image onto the new image
-    new_img.paste(img, (border_size, border_size))
-
-    # Create a drawing object
-    draw = ImageDraw.Draw(new_img)
-
-    # Define the number of rainbow colors
-    num_colors = 100
-
-    # Iterate through the rainbow colors and draw the border
-    for i in range(border_size):
-        color = colorsys.hsv_to_rgb(i / num_colors, 1.0, 1.0)
-        color = tuple(int(c * 255) for c in color)
-        draw.rectangle(
-            [i, i, new_width - i - 1, new_height - i - 1],
-            outline=color
-        )
-
-    # Save the result
-    new_img.save(output_image_path)
-
-
-def download_image(url):
-    response = requests.get(url)
-    if response.status_code == 200:
-        return BytesIO(response.content)
-    return None
-
-def add_border_to_first_image(request, offer):
-    # Check if pictures field is not empty
-    if offer.supplier_offer.pictures:
-        # Get the first image URL
-        first_image_url = offer.supplier_offer.pictures[0]
-
-        # Download the image
-        image_content = download_image(first_image_url)
-
-        if image_content:
-            # Create an Image object from the downloaded content
-            img = Image.open(image_content)
-
-            # Construct the absolute file paths
-            media_root = settings.MEDIA_ROOT
-            output_dir = os.path.join(media_root, 'supplies/images')
-            path = Path(output_dir)
-            path.mkdir(parents=True, exist_ok=True)
-            output_image_name = f"bordered_{os.path.basename(first_image_url)}"
-            output_image_path = os.path.join(output_dir, output_image_name)
-
-            # Apply border and save the modified image
-            add_rainbow_border(img, output_image_path)
-
-            # # Update the pictures field with the new URL
-            # new_image_url = os.path.join(settings.MEDIA_URL, output_image_name)
-            output_url = os.path.join(settings.MEDIA_URL, 'supplies/images')
-            # Construct the absolute URL of the modified image
-            absolute_url = request.build_absolute_uri(os.path.join(output_url, output_image_name))
-            logger.debug(absolute_url)
-            offer.pictures = []
-            # Update the pictures field with the new URL
-            offer.pictures.insert(0, absolute_url)
-
-            # offer.pictures.append(new_image_url)
-
-            # Save the updated offer instance
-            offer.save()
-
-def get_content_manager():
-    return ContentManager(OpenAI(**settings.OPENAI_CREDENTIALS))
-
-
-def get_translator():
-    return OpenAITranslator(OpenAI(**settings.OPENAI_CREDENTIALS))

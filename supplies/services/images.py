@@ -107,7 +107,7 @@ def add_infographics_to_firs_image(request, offer):
         'product_infographics/red_title_yellow_arrows.html',
         {
             'product_photo_b64': encoded_image,
-            'product_features': features.features,
+            'product_features': [f.capitalize() for f in features.features],
             'product_title': features.title
         }
     )
@@ -128,8 +128,6 @@ def add_infographics_to_firs_image(request, offer):
     output_url = os.path.join(settings.MEDIA_URL, 'supplies/images')
     # Construct the absolute URL of the modified image
     absolute_url = request.build_absolute_uri(os.path.join(output_url, output_name))
-    logger.debug(absolute_url)
-    logger.debug(html)
     offer.pictures = []
     # Update the pictures field with the new URL
     offer.pictures.insert(0, absolute_url)

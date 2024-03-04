@@ -132,6 +132,13 @@ class Offer(models.Model):
         null=True, blank=True
     )
 
+    price_multiplier = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
     @property
     def available(self):
         return self.supplier_offer.available
@@ -176,7 +183,7 @@ class Offer(models.Model):
 
     @property
     def price(self):
-        return self.supplier_offer.price
+        return self.supplier_offer.price * (self.price_multiplier or 1)
 
     @property
     def display_category(self):

@@ -146,6 +146,7 @@ class OfferAdmin(admin.ModelAdmin):
         "active",
         ("supplier_offer__category__site_category", CategoryFilter),
         "supplier_offer__available",
+        ("supplier_offer__price", NumericRangeFilterBuilder()),
     ]
 
     actions = [

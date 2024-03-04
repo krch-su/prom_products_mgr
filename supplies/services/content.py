@@ -10,12 +10,12 @@ class ContentManager:
     def __init__(self, rewriter: abstract.Rewriter):
         self._rewriter = rewriter
 
-    def create_title(self, offer: Offer):
+    def rewrite_title(self, offer: Offer):
         soffer = offer.supplier_offer
         offer.name = self._rewriter.rewrite_title(soffer)
         offer.save(update_fields=['name'])
 
-    def create_description(self, offer: Offer):
+    def rewrite_description(self, offer: Offer):
         soffer = offer.supplier_offer
         offer.description = self._rewriter.rewrite_description(soffer)
         offer.save(update_fields=['description'])

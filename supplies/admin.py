@@ -303,7 +303,7 @@ class CategoryForm(forms.ModelForm):
 
     def get_initial_for_field(self, field, field_name):
         if field_name == 'supplier_categories':
-            return self.instance.supplier_categories.all()
+            return self.instance.supplier_categories.all() if self.instance.pk else []
         else:
             return super().get_initial_for_field(field, field_name)
 

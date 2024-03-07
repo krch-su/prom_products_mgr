@@ -160,6 +160,15 @@ class OfferAdmin(admin.ModelAdmin):
         'add_infographics',
     ]
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'supplier_offer',
+            'supplier_offer__category',
+            'supplier_offer__supplier',
+            'category',
+            'supplier_offer__category__site_category'
+        )
+
     @admin.display(description='Наявність')
     def display_available(self, obj):
         if obj.available:

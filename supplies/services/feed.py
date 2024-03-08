@@ -1,12 +1,17 @@
 import json
+import logging
+import math
 from typing import List, Dict
 from xml.etree import ElementTree as ET
 
 import requests
+from _decimal import Decimal
 from django.core.serializers import serialize
 from django.db.models import QuerySet
 
 from supplies.models import SiteCategory, Offer, SupplierCategory, SupplierOffer, Supplier
+
+logger = logging.getLogger(__name__)
 
 
 def insert_elements(source_root, target_root):
@@ -65,7 +70,10 @@ def get_offers_data(offer_queryset):
             if k in ['keywords', 'keywords_ua'] and (v or offer_data.get(v, None)):
                 val = ', '.join((v or []) + (offer_data.get(k, []) or []))
             elif k == 'price':
-                val = offer.price
+                val = math.ceil(offer.price)
+            elif k in ['oldprice', 'price_old', 'discount'] and v and offer.price_multiplier:
+                logger.debug(v)
+                val = math.ceil(Decimal(v) * offer.price_multiplier)
             elif isinstance(v, bool):
                 val = str(offer_data.get(k, v)).lower()
             elif k == 'pictures':

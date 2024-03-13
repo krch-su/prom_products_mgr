@@ -3,4 +3,4 @@
 set -o errexit
 set -o nounset
 
-celery -A trade_harbor worker -l INFO --
+celery -A trade_harbor worker -l INFO

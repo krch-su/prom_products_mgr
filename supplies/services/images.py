@@ -189,3 +189,29 @@ class TextDetector:
 
         return rects, confidences
 
+def swt_text_detection(image):
+    # Convert the image to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Apply Canny edge detection
+    edges = cv2.Canny(gray, 100, 200)
+
+    # Perform morphological operations to clean up edges
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+
+    # Find contours in the edge image
+    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Filter contours based on area and aspect ratio
+    min_area = 100
+    max_area = 5000
+    aspect_ratio = 3
+    detected_text_regions = []
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        area = cv2.contourArea(contour)
+        if area > min_area and area < max_area and w / h < aspect_ratio:
+            detected_text_regions.append((x, y, x + w, y + h))
+
+    return detected_text_regions

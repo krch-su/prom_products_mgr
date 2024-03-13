@@ -5,6 +5,8 @@ import os
 from io import BytesIO
 from pathlib import Path
 
+import cv2
+import numpy as np
 import requests
 from PIL import Image, ImageDraw
 from django.conf import settings
@@ -136,3 +138,54 @@ def add_infographics_to_firs_image(request, offer):
 
     # Save the updated offer instance
     offer.save()
+
+
+class TextDetector:
+    def __init__(self, model_path='./bin/frozen_east_text_detection.pb'):
+        self.net = cv2.dnn.readNet(model_path)
+
+    def detect_text(self, image, score_threshold=0.9):
+        blob = cv2.dnn.blobFromImage(image, 1.0, (320, 320), (123.68, 116.78, 103.94), True, False)
+        self.net.setInput(blob)
+        (scores, geometry) = self.net.forward(["feature_fusion/Conv_7/Sigmoid", "feature_fusion/concat_3"])
+        rects, confidences = self.decode_predictions(scores, geometry, score_threshold)
+        for rect in rects:
+            cv2.rectangle(image, (rect[0], rect[1]), (rect[2], rect[3]), (0, 255, 0), 2)
+        cv2.imwrite("text_detection_result.jpg", image)
+        return len(rects) > 20
+
+    def decode_predictions(self, scores, geometry, score_threshold):
+        (numRows, numCols) = scores.shape[2:4]
+        rects = []
+        confidences = []
+
+        for y in range(0, numRows):
+            scoresData = scores[0, 0, y]
+            xData0 = geometry[0, 0, y]
+            xData1 = geometry[0, 1, y]
+            xData2 = geometry[0, 2, y]
+            xData3 = geometry[0, 3, y]
+            anglesData = geometry[0, 4, y]
+
+            for x in range(0, numCols):
+                score = scoresData[x]
+                if score < score_threshold:
+                    continue
+
+                offsetX, offsetY = x * 4.0, y * 4.0
+                angle = anglesData[x]
+                cos = np.cos(angle)
+                sin = np.sin(angle)
+                h = xData0[x] + xData2[x]
+                w = xData1[x] + xData3[x]
+
+                endX = int(offsetX + (cos * xData1[x]) + (sin * xData2[x]))
+                endY = int(offsetY - (sin * xData1[x]) + (cos * xData2[x]))
+                startX = int(endX - w)
+                startY = int(endY - h)
+
+                rects.append((startX, startY, endX, endY))
+                confidences.append(score)
+
+        return rects, confidences
+

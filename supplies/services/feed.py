@@ -1,15 +1,21 @@
+import asyncio
 import json
 import logging
 import math
+import os
 from typing import List, Dict
 from xml.etree import ElementTree as ET
 
+import cv2
+import numpy as np
 import requests
 from _decimal import Decimal
+from django.conf import settings
 from django.core.serializers import serialize
 from django.db.models import QuerySet
 
 from supplies.models import SiteCategory, Offer, SupplierCategory, SupplierOffer, Supplier
+from supplies.services.images import TextDetector
 
 logger = logging.getLogger(__name__)
 
@@ -218,3 +224,92 @@ def load_offers(supplier: Supplier):
         response.raise_for_status()
 
     return save_offers(response.content, supplier=supplier)
+
+
+def generate_merchant_center_xml():
+    """
+    This is a temporary solution to generate feed for GMC.
+    It delegates generation to external service and replaces main image
+    :return: content of xml file
+    """
+    response = requests.get(settings.MERCHANT_CENTER_FEED_URL)
+
+    if response.status_code != 200:
+        response.raise_for_status()
+
+    ET.register_namespace('g', 'http://base.google.com/ns/1.0')
+    root = ET.fromstring(response.content)
+    ns = {'g': 'http://base.google.com/ns/1.0'}
+
+    items = root.findall('.//item')
+
+    text_detector = TextDetector()
+
+    for item in items:
+        # Find the image_link and additional_image_link elements
+        image_link = item.find('.//g:image_link', ns)
+        additional_image_links = item.findall('.//g:additional_image_link', ns)
+
+        for l in additional_image_links:
+            resp = requests.get(l.text)
+            image_data = np.frombuffer(resp.content, dtype=np.uint8)
+            image = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
+            if not text_detector.detect_text(image):
+                image_link.text = l.text
+                break
+
+    path = os.path.join(settings.MEDIA_ROOT, 'supplies/gmc_feed.xml')
+    with open(path, 'w') as f:
+        f.write(ET.tostring(root, encoding='unicode'))
+
+
+async def fetch_and_process_image(url):
+    response = requests.get(url)
+    if response.status_code != 200:
+        response.raise_for_status()
+    return response.content
+
+
+async def agenerate_merchant_center_xml():
+    """
+    This is a temporary solution to generate feed for GMC.
+    It delegates generation to external service and replaces main image
+    :return: content of xml file
+    """
+    response = requests.get(settings.MERCHANT_CENTER_FEED_URL)
+
+    if response.status_code != 200:
+        response.raise_for_status()
+
+    root = ET.fromstring(response.content)
+    ns = {'g': 'http://base.google.com/ns/1.0'}
+
+    items = root.findall('.//item')
+
+    text_detector = TextDetector()
+
+    tasks = []
+    for item in items:
+        # Find the image_link and additional_image_link elements
+        image_link = item.find('.//g:image_link', ns)
+        additional_image_links = item.findall('.//g:additional_image_link', ns)
+
+        for l in additional_image_links:
+            tasks.append(asyncio.create_task(fetch_and_process_image(l.text)))
+
+    image_datas = await asyncio.gather(*tasks)
+
+    for idx, item in enumerate(items):
+        # Find the image_link and additional_image_link elements
+        image_link = item.find('.//g:image_link', ns)
+        additional_image_links = item.findall('.//g:additional_image_link', ns)
+
+        for image_data in image_datas[idx::len(items)]:
+            image = cv2.imdecode(np.frombuffer(image_data, dtype=np.uint8), cv2.IMREAD_COLOR)
+            if not text_detector.detect_text(image):
+                image_link.text = additional_image_links[idx].text
+                break
+
+    path = os.path.join(settings.MEDIA_ROOT, 'supplies/gmc_feed.xml')
+    with open(path, 'w') as f:
+        f.write(ET.tostring(root, encoding='unicode'))

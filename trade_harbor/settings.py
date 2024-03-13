@@ -148,6 +148,7 @@ OPENAI_CREDENTIALS = {
 }
 
 DEEPL_API_KEY = env.get('DEEPL_API_KEY')
+MERCHANT_CENTER_FEED_URL = 'https://miydim.in.ua/google_merchant_center.xml?hash_tag=4983c9be9be0b8a32aee4caeac605bbc&product_ids=&label_ids=&export_lang=uk&group_ids='
 
 
 try:

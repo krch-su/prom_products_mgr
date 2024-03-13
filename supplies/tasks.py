@@ -1,12 +1,18 @@
+import os
 from typing import List
-
-from celery import shared_task, chord
+from xml.etree import ElementTree as ET
+import cv2
+import numpy as np
+import requests
+from celery import shared_task, chord, chain
 from celery.utils.log import get_task_logger
+from django.conf import settings
 from openai import APITimeoutError
 
 from supplies.factories import get_content_manager, get_translator
 from supplies.models import Offer, Supplier
 from supplies.services.feed import load_offers, generate_merchant_center_xml as gen_gmc_xml
+from supplies.services.images import TextDetector
 
 logger = get_task_logger(__name__)
 
@@ -51,56 +57,58 @@ def generate_content_and_translate(offer_ids: List[int]):
     chord(tasks)(translate_offers.s(offer_ids=offer_ids))
 
 
-# @shared_task
-# def process_image(*_, image_url):
-#     logger.debug(image_url)
-#     text_detector = TextDetector()
-#
-#     response = requests.get(image_url)
-#     image_data = np.frombuffer(response.content, dtype=np.uint8)
-#     image = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
-#     # Your image processing logic here
-#     return image_url if not text_detector.detect_text(image) else None
-#
-# @shared_task
-# def update_image_links(root_string, processed_image_urls):
-#     root = ET.fromstring(root_string)
-#     ns = {'g': 'http://base.google.com/ns/1.0'}
-#     for item, processed_image_url in zip(root.findall('.//item'), processed_image_urls):
-#         if processed_image_url:
-#             image_link = item.find('.//g:image_link', ns)
-#             image_link.text = processed_image_url
-#
-#     path = os.path.join(settings.MEDIA_ROOT, 'supplies/gmc_feed.xml')
-#     with open(path, 'w') as f:
-#         f.write(ET.tostring(root, encoding='unicode'))
-#
-# @shared_task
-# def generate_merchant_center_xml():
-#     """
-#     This is a temporary solution to generate feed for GMC.
-#     It delegates generation to external service and replaces main image
-#     :return: content of xml file
-#     """
-#     response = requests.get(settings.MERCHANT_CENTER_FEED_URL)
-#
-#     if response.status_code != 200:
-#         response.raise_for_status()
-#
-#     root_string = response.content.decode('utf-8')
-#
-#     items = ET.fromstring(root_string).findall('.//item')
-#     tasks = []
-#
-#     for item in items:
-#         additional_image_links = item.findall('.//g:additional_image_link', {'g': 'http://base.google.com/ns/1.0'})
-#         for l in additional_image_links:
-#             tasks.append(process_image.s(image_url=l.text))
-#
-#     chain(
-#         *tasks,
-#         update_image_links.s(root_string)
-#     ).delay()
-@shared_task()
+@shared_task
+def process_image(*_, image_url):
+    logger.debug(image_url)
+    text_detector = TextDetector()
+
+    response = requests.get(image_url)
+    image_data = np.frombuffer(response.content, dtype=np.uint8)
+    image = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
+    # Your image processing logic here
+    return image_url if not text_detector.detect_text(image) else None
+
+@shared_task
+def update_image_links(root_string, processed_image_urls):
+    root = ET.fromstring(root_string)
+    ns = {'g': 'http://base.google.com/ns/1.0'}
+    for item, processed_image_url in zip(root.findall('.//item'), processed_image_urls):
+        if processed_image_url:
+            image_link = item.find('.//g:image_link', ns)
+            image_link.text = processed_image_url
+
+    path = os.path.join(settings.MEDIA_ROOT, 'supplies/gmc_feed.xml')
+    with open(path, 'w') as f:
+        f.write(ET.tostring(root, encoding='unicode'))
+
+
+@shared_task
 def generate_merchant_center_xml():
-    gen_gmc_xml()
+    """
+    This is a temporary solution to generate feed for GMC.
+    It delegates generation to external service and replaces main image
+    :return: content of xml file
+    """
+    response = requests.get(settings.MERCHANT_CENTER_FEED_URL)
+
+    if response.status_code != 200:
+        response.raise_for_status()
+
+    root_string = response.content.decode('utf-8')
+
+    items = ET.fromstring(root_string).findall('.//item')
+    tasks = []
+
+    for item in items:
+        additional_image_links = item.findall('.//g:additional_image_link', {'g': 'http://base.google.com/ns/1.0'})
+        for l in additional_image_links:
+            tasks.append(process_image.s(image_url=l.text))
+
+    chain(
+        *tasks,
+        update_image_links.s(root_string)
+    ).delay()
+
+# @shared_task()
+# def generate_merchant_center_xml():
+#     gen_gmc_xml()

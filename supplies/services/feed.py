@@ -263,38 +263,47 @@ def generate_merchant_center_xml():
         f.write(ET.tostring(root, encoding='unicode'))
 
 
-async def fetch_xml(url):
-    response = requests.get(url)
-    response.raise_for_status()
-    return response.content
-
-async def process_additional_images(additional_image_links, image_link, ns):
-    for l in additional_image_links:
-        resp = requests.get(l.text)
-        image_data = np.frombuffer(resp.content, dtype=np.uint8)
-        image = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
-        if len(swt_text_detection(image)) < 10:
-            image_link.text = l.text
-            break
+# async def fetch(url):
+#     response = await loop.run_in_executor(None, requests.get, url)
+#     return response
 
 async def agenerate_merchant_center_xml():
-    xml_content = await fetch_xml(settings.MERCHANT_CENTER_FEED_URL)
+    """
+    This is a temporary solution to generate feed for GMC.
+    It delegates generation to external service and replaces main image
+    :return: content of xml file
+    """
+
+    response = await asyncio.to_thread(requests.get, settings.MERCHANT_CENTER_FEED_URL)
+
+    if response.status_code != 200:
+        response.raise_for_status()
+
     ET.register_namespace('g', 'http://base.google.com/ns/1.0')
-    root = ET.fromstring(xml_content)
+    root = ET.fromstring(response.content)
     ns = {'g': 'http://base.google.com/ns/1.0'}
+
     items = root.findall('.//item')
 
-    count = 0
+    request_count = 0
+
     for item in items:
+        # Find the image_link and additional_image_link elements
         image_link = item.find('.//g:image_link', ns)
         additional_image_links = item.findall('.//g:additional_image_link', ns)
 
-        await process_additional_images(additional_image_links, image_link, ns)
-        count += 1
-        if count % 100 == 0:
-            print(f"Processed {count} items. Pausing for 5 seconds...")
-            await asyncio.sleep(5)
+        for l in additional_image_links:
+            resp = await asyncio.to_thread(requests.get, l.text)
+            image_data = np.frombuffer(resp.content, dtype=np.uint8)
+            image = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
+            if len(swt_text_detection(image)) < 10:
+                image_link.text = l.text
+                break
+
+        request_count += 1
+        if request_count % 100 == 0:
+            await asyncio.sleep(2)  # Pause for 5 seconds after every 100 requests
 
     path = os.path.join(settings.MEDIA_ROOT, 'supplies/gmc_feed.xml')
-    with open(path, 'w') as f:
-        f.write(ET.tostring(root, encoding='unicode'))
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(ET.tostring(root, encoding='utf-8').decode())

@@ -4,7 +4,7 @@ import logging
 import math
 import os
 from typing import List, Dict
-from xml.etree import ElementTree as ET
+from lxml import etree as ET
 
 import cv2
 import numpy as np
@@ -140,7 +140,7 @@ def gen_xml(offers_data: List[Dict]):
                 for url in value:
                     ET.SubElement(offer_el, 'picture').text = str(url)
             elif field in ['description', 'description_ua']:
-                ET.SubElement(offer_el, field).text = f'<![CDATA[{value}]]>'
+                ET.SubElement(offer_el, field).text = ET.CDATA(value)
             else:
                 ET.SubElement(offer_el, field).text = str(value)
     return ('<?xml version="1.0" encoding="UTF-8" ?><!DOCTYPE yml_catalog SYSTEM "shops.dtd">' +

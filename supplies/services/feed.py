@@ -140,7 +140,7 @@ def gen_xml(offers_data: List[Dict]):
                 for url in value:
                     ET.SubElement(offer_el, 'picture').text = str(url)
             elif field in ['description', 'description_ua']:
-                ET.SubElement(offer_el, field).text = ET.CDATA(value)
+                ET.SubElement(offer_el, field).text = ET.CDATA(value.replace('\n', '<br/>'))
             else:
                 ET.SubElement(offer_el, field).text = str(value)
     return ('<?xml version="1.0" encoding="UTF-8" ?><!DOCTYPE yml_catalog SYSTEM "shops.dtd">' +

@@ -137,7 +137,7 @@ def gen_xml(offers_data: List[Dict]):
             elif field in ['keywords', 'keywords_ua'] and value:
                 ET.SubElement(offer_el, field).text = value
             elif field == 'pictures':
-                for url in value:
+                for url in value[:10]:
                     ET.SubElement(offer_el, 'picture').text = str(url)
             elif field in ['description', 'description_ua']:
                 ET.SubElement(offer_el, field).text = ET.CDATA(value.replace('\n', '<br/>'))

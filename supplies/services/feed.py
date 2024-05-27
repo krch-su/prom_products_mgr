@@ -78,8 +78,11 @@ def get_offers_data(offer_queryset):
             elif k == 'price':
                 val = math.ceil(offer.price)
             elif k in ['oldprice', 'price_old', 'discount'] and v and offer.price_multiplier:
-                logger.debug(v)
-                val = math.ceil(Decimal(v) * offer.price_multiplier)
+                v = Decimal(v)
+                val = math.ceil(v * offer.price_multiplier)
+                if k in ['oldprice', 'price_old'] and v < offer.price:
+                    # using 30% discount as fallback if supplier data has wrong old price
+                    val = math.ceil(v + v * Decimal(0.3))
             elif isinstance(v, bool):
                 val = str(offer_data.get(k, v)).lower()
             elif k == 'pictures':

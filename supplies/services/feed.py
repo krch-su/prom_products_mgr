@@ -340,3 +340,4 @@ def update_lugi_suggested_prices():
     )
     for offer in offers:
         offer.suggested_price = retrieve_lugi_suggested_price(offer)
+        offer.save()

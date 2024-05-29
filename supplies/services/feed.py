@@ -4,6 +4,8 @@ import logging
 import math
 import os
 from typing import List, Dict
+
+from bs4 import BeautifulSoup
 from lxml import etree as ET
 
 import cv2
@@ -13,6 +15,8 @@ from _decimal import Decimal
 from django.conf import settings
 from django.core.serializers import serialize
 from django.db.models import QuerySet
+from requests import HTTPError
+from retry import retry
 
 from supplies.models import SiteCategory, Offer, SupplierCategory, SupplierOffer, Supplier
 from supplies.services.images import TextDetector, swt_text_detection
@@ -233,7 +237,7 @@ def load_offers(supplier: Supplier):
 
 def generate_merchant_center_xml():
     """
-    This is a temporary solution to generate feed for GMC.
+    This is a temporary solution for generation GMC feed.
     It delegates generation to external service and replaces main image
     :return: content of xml file
     """
@@ -274,7 +278,7 @@ def generate_merchant_center_xml():
 
 async def agenerate_merchant_center_xml():
     """
-    This is a temporary solution to generate feed for GMC.
+    This is a temporary solution for generation GMC feed.
     It delegates generation to external service and replaces main image
     :return: content of xml file
     """
@@ -312,3 +316,27 @@ async def agenerate_merchant_center_xml():
     path = os.path.join(settings.MEDIA_ROOT, 'supplies/gmc_feed.xml')
     with open(path, 'w', encoding='utf-8') as f:
         f.write(ET.tostring(root, encoding='utf-8').decode())
+
+
+@retry(HTTPError, tries=10, delay=1, backoff=2)
+def retrieve_lugi_suggested_price(offer: Offer) -> Decimal:
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+    search_url = f'https://lugi.com.ua/search/?search={offer.supplier_offer.vendor_code}'
+    response = requests.get(search_url, headers=headers)
+    response.raise_for_status()
+
+    soup = BeautifulSoup(response.text, 'html.parser')
+    els = soup.find_all('div', class_='product-model')
+    for el in els:
+        if el.text == offer.supplier_offer.vendor_code:
+            e = el.parent.find('span', class_='price-rrc__price')
+            return Decimal(e.text.split()[0])
+
+
+def update_lugi_suggested_prices():
+    offers = Offer.objects.filter(
+        supplier_offer__supplier__name='lugi', active=True, supplier_offer__available=True
+    )
+    for offer in offers:
+        offer.suggested_price = retrieve_lugi_suggested_price(offer)

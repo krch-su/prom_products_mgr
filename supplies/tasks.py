@@ -7,7 +7,7 @@ from openai import APITimeoutError
 
 from supplies.factories import get_content_manager, get_translator
 from supplies.models import Offer, Supplier
-from supplies.services.feed import load_offers, agenerate_merchant_center_xml
+from supplies.services.feed import load_offers, agenerate_merchant_center_xml, update_lugi_suggested_prices
 
 logger = get_task_logger(__name__)
 
@@ -51,6 +51,10 @@ def generate_content_and_translate(offer_ids: List[int]):
 
     chord(tasks)(translate_offers.s(offer_ids=offer_ids))
 
+
+@shared_task()
+def update_suggested_prices():
+    update_lugi_suggested_prices()
 
 # text_detector = TextDetector()
 #

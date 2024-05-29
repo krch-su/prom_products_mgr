@@ -139,6 +139,14 @@ class Offer(models.Model):
         blank=True,
     )
 
+    # sometimes the suggested price is different from the supplier feed price and we manually get it from the website
+    suggested_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
     @property
     def available(self):
         return self.supplier_offer.available
@@ -183,7 +191,8 @@ class Offer(models.Model):
 
     @property
     def price(self):
-        return self.supplier_offer.price * (self.price_multiplier or 1)
+        price = self.suggested_price or self.supplier_offer.price
+        return price * (self.price_multiplier or 1)
 
     @property
     def display_category(self):

@@ -40,6 +40,7 @@ gunicorn = "^21.2.0"
 html2image = "^2.0.4.3"
 cachetools = "^5.3.3"
 opencv-python = "^4.9.0.80"
+retry = "^0.9.2"
 
 
 [tool.poetry.group.dev.dependencies]

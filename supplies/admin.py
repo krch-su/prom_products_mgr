@@ -3,7 +3,6 @@ import logging
 import xml.etree.ElementTree as ET
 
 import requests
-from _decimal import Decimal
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin import SimpleListFilter, RelatedFieldListFilter
@@ -315,6 +314,13 @@ class SupplierOfferAdmin(admin.ModelAdmin):
 
     actions = ['publish']
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'category',
+            'supplier',
+            'category__site_category'
+        )
+
     @admin.action(description="Publish offers")
     def publish(self, request, queryset):
         for item in queryset:
@@ -373,6 +379,11 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ['name']
     list_filter = ['parent_category']
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'parent_category',
+        )
+
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
@@ -413,5 +424,12 @@ class SupplierCategoryAdmin(admin.ModelAdmin):
         'name',
         'supplier',
         'parent_category',
-        'site_category'
+        'site_category',
     ]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'supplier',
+            'parent_category',
+            'site_category',
+        )

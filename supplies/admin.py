@@ -1,6 +1,7 @@
 import json
 import logging
 import xml.etree.ElementTree as ET
+from uuid import uuid4
 
 import requests
 from django import forms
@@ -354,11 +355,12 @@ class CategoryForm(forms.ModelForm):
 
     def save(self, commit=True):
         instance = super(CategoryForm, self).save(commit=False)
+        instance.id = uuid4().int >> 64  # truncate uuid to bigint size
         supplier_categories = self.cleaned_data.get('supplier_categories', [])
+        instance.supplier_categories.set(supplier_categories)
 
         if commit:
             instance.save()
-            instance.supplier_categories.set(supplier_categories)
 
         return instance
 

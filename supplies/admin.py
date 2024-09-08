@@ -125,6 +125,11 @@ class PriceMultiplierForm(ActionForm):
     multiplier = forms.DecimalField()
 
 
+class CategoryBulkChangeForm(ActionForm):
+    action = forms.CharField(initial='set_category')
+    category = forms.ModelChoiceField(queryset=models.SupplierCategory.objects)
+
+
 @admin.register(models.Offer)
 class OfferAdmin(admin.ModelAdmin):
     form = OfferForm
@@ -313,7 +318,7 @@ class SupplierOfferAdmin(admin.ModelAdmin):
         PublishedFilter,
     ]
 
-    actions = ['publish']
+    actions = ['publish', 'category_bulk_change']
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
@@ -326,6 +331,25 @@ class SupplierOfferAdmin(admin.ModelAdmin):
     def publish(self, request, queryset):
         for item in queryset:
             models.Offer.objects.get_or_create(supplier_offer=item)
+
+    @admin.action(description="Category Bulk Change")
+    def category_bulk_change(self, request: WSGIRequest, queryset):
+        if 'apply' in request.POST:
+            form = CategoryBulkChangeForm(request.POST)
+            logger.debug('APPLY IN POST')
+            if form.is_valid():
+                category = form.cleaned_data['category']
+                queryset.update(category=category)
+                messages.add_message(request, SUCCESS, f'Categories updated')
+                return HttpResponseRedirect(request.get_full_path())
+        else:
+            form = CategoryBulkChangeForm()
+
+        return render(request, 'admin/supplies/supplier_offer/category_bulk_change.html', {
+            'items': queryset.order_by('pk'),
+            'form': form,
+            'title': u'Category Bulk Change'
+        })
 
     class Media:
         css = {

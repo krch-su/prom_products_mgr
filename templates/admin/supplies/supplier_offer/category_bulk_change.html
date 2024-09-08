@@ -1,0 +1,18 @@
+{% extends 'admin/base_site.html' %}
+
+ {% block content %}
+ <form action="" method="post">
+    {% csrf_token %}
+    {% for item in items %}
+    <input type="hidden" name="action" value="category_bulk_change"/>
+    <input type="hidden" name="_selected_action" value="{{ item.pk }}"/>
+    {% endfor %}
+
+    {{ form.category.errors }}
+    {{ form.category.label_tag }}
+    {{ form.category }}
+    <p>Apply for:</p>
+    <ul>{{ items|unordered_list }}</ul>
+    <input type="submit" name="apply" value="Apply" />
+ </form>
+ {% endblock %}

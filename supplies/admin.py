@@ -355,10 +355,10 @@ class CategoryForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super(CategoryForm, self).save(commit=False)
         supplier_categories = self.cleaned_data.get('supplier_categories', [])
-        instance.supplier_categories.set(supplier_categories)
 
         if commit:
             instance.save()
+            instance.supplier_categories.set(supplier_categories)
 
         return instance
 

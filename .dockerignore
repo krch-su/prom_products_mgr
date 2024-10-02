@@ -1,0 +1,6 @@
+venv/
+postgres_data/
+db.sqlite3
+.env
+ms-playwright/
+static/

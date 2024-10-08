@@ -49,8 +49,8 @@ def model_to_json(model, exclude_fields = None):
 
 def replace_symbols(input_text):
     replacements = {
+        '&': '&amp;',  # must be first to avoid replacement of already replaced items
         '"': '&quot;',
-        '&': '&amp;',
         '>': '&gt;',
         '<': '&lt;',
         "'": '&apos;'
@@ -62,11 +62,11 @@ def replace_symbols(input_text):
     return input_text
 
 
-def get_offers_data(offer_queryset):
+def get_offers_data(offers):
     exclude_fields = ['_id', 'supplier', 'created_at', 'updated_at', 'optPrice', 'category', 'id']
 
-    offers = []
-    for offer in offer_queryset:
+    result = []
+    for offer in offers:
         offer_result = {}
         offer_data = model_to_json(offer)
         supplier_offer_data = model_to_json(offer.supplier_offer, exclude_fields)
@@ -108,8 +108,8 @@ def get_offers_data(offer_queryset):
 
         offer_result['_attrs'] = attrs
 
-        offers.append(offer_result)
-    return offers
+        result.append(offer_result)
+    return result
 
 
 def gen_xml(offers_data: List[Dict]):
@@ -162,7 +162,7 @@ def save_offers(xml_data, supplier):
     # Parse XML
     root = ET.fromstring(xml_data)
     existing_categories = SupplierCategory.objects.filter(supplier=supplier).values_list('pk', flat=True)
-
+    
     categories = []
     for category_element in root.findall(".//categories/category"):
         categories.append(SupplierCategory(
@@ -171,6 +171,7 @@ def save_offers(xml_data, supplier):
             parent_category_id=category_element.get('parentId'),
             name=category_element.text
         ))
+
     categories = filter(  # removing categories with invalid parents
         lambda x: x.parent_category_id in list(map(lambda c: c.id, categories)) + list(existing_categories),
         categories

@@ -202,6 +202,9 @@ class Offer(models.Model):
     def display_supplier(self):
         return self.supplier_offer.supplier
 
+    def __str__(self):
+        return self.name
+
     class Meta:
         verbose_name = 'Offer'
         verbose_name_plural = 'Offers'

@@ -190,6 +190,17 @@ class Offer(models.Model):
         return self.supplier_offer.vendor_code
 
     @property
+    def oldprice(self):
+        old_price = (
+            self.supplier_offer.oldprice
+            or self.supplier_offer.price_old
+            or self.supplier_offer.old_price
+        )
+        if old_price > self.supplier_offer.price:
+            return old_price
+        return None
+
+    @property
     def price(self):
         price = self.suggested_price or self.supplier_offer.price
         return price * (self.price_multiplier or 1)

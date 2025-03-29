@@ -404,6 +404,7 @@ class CategoryAdmin(admin.ModelAdmin):
     form = CategoryForm
     search_fields = ['name']
     list_filter = ['parent_category']
+    ordering = ['name']
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
@@ -452,6 +453,8 @@ class SupplierCategoryAdmin(admin.ModelAdmin):
         'parent_category',
         'site_category',
     ]
+
+    ordering = ['name']
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(

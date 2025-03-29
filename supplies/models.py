@@ -205,6 +205,7 @@ class Offer(models.Model):
     class Meta:
         verbose_name = 'Offer'
         verbose_name_plural = 'Offers'
+        ordering = ['name']
 
 
 class SiteCategory(models.Model, TreeMixin):
@@ -221,6 +222,7 @@ class SiteCategory(models.Model, TreeMixin):
     class Meta:
         verbose_name = 'Site Category'
         verbose_name_plural = 'Site Categories'
+        ordering = ['name']
 
     def __str__(self):
         return self.name
@@ -248,6 +250,7 @@ class SupplierCategory(models.Model, TreeMixin):
     name = models.CharField(max_length=512)
 
     class Meta:
+        ordering = ['name']
         verbose_name = 'Supplier Category'
         verbose_name_plural = 'Supplier Categories'
 

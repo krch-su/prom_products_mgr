@@ -379,7 +379,7 @@ class CategoryForm(forms.ModelForm):
 
     def save(self, commit=True):
         instance = super(CategoryForm, self).save(commit=False)
-        instance.id = uuid4().int >> 64  # truncate uuid to bigint size
+        instance.id = uuid4().int >> 63  # truncate uuid to bigint size
         supplier_categories = self.cleaned_data.get('supplier_categories', [])
         instance.supplier_categories.set(supplier_categories)
 

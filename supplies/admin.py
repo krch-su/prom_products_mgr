@@ -92,6 +92,10 @@ class CategoryFilter(RelatedFieldListFilter):
 
         return queryset.filter(**kw)
 
+    def field_choices(self, field, request, model_admin):
+        ordering = ['name']
+        return field.get_choices(include_blank=False, ordering=ordering)
+
 
 class JsonSelectMultiple(forms.SelectMultiple):
 

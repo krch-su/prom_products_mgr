@@ -127,7 +127,7 @@ class PriceMultiplierForm(ActionForm):
 
 class CategoryBulkChangeForm(ActionForm):
     action = forms.CharField(initial='set_category')
-    category = forms.ModelChoiceField(queryset=models.SupplierCategory.objects)
+    category = forms.ModelChoiceField(queryset=models.SupplierCategory.objects.order_by('name'))
 
 
 @admin.register(models.Offer)
@@ -366,7 +366,7 @@ class SupplierAdmin(admin.ModelAdmin):
 
 class CategoryForm(forms.ModelForm):
     supplier_categories = forms.ModelMultipleChoiceField(
-        queryset=models.SupplierCategory.objects.all(),
+        queryset=models.SupplierCategory.objects.order_by('name'),
         widget=FilteredSelectMultiple("SupplierCategory", is_stacked=False),
         required=False,
     )

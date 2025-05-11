@@ -28,11 +28,11 @@ class Command(BaseCommand):
             )
 
             offer_to_keep = offers.filter(created_at=max_created_at).first()
-            offers_to_delete = offers.exclude(id=offer_to_keep.id) if offer_to_keep else offers
+            offers_to_delete = offers.exclude(pk=offer_to_keep.pk) if offer_to_keep else offers
 
             # Delete related Offer records first
-            related_offer_ids = Offer.objects.filter(supplier_offer__in=offers_to_delete).values_list('id', flat=True)
-            deleted_offers = Offer.objects.filter(id__in=related_offer_ids).delete()[0]
+            related_offer_ids = Offer.objects.filter(supplier_offer__in=offers_to_delete).values_list('pk', flat=True)
+            deleted_offers = Offer.objects.filter(pk__in=related_offer_ids).delete()[0]
 
             # Then delete the SupplierOffers
             deleted_supplier_offers = offers_to_delete.delete()[0]

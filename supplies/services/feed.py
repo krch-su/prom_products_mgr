@@ -214,9 +214,11 @@ def save_offers(xml_data, supplier):
                     field_value = field_value.lower() == 'true'
                 offer_data[field_name] = field_value
 
-        # Create or update Offer and SupplierOffer models
         SupplierOffer.objects.update_or_create(
             id=offer_data.get('id'),
+            vendorCode=offer_data.get('vendorCode'),
+            barcode=offer_data.get('barcode'),
+            article=offer_data.get('article'),
             supplier=supplier,
             defaults=offer_data
         )
